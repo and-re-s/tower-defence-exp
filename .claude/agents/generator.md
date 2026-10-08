@@ -95,7 +95,7 @@ The test API reports the real state of the real game. `?test=1` must not change 
 Before you hand items over:
 1. `npm run build` succeeds.
 2. `npm test` passes. These tests run seeded games in Node at full speed and check invariants: no NaN or Infinity in the state, no negative resources, every level eventually ends, and the same seed always gives the same result. Add a test for each item whose "Done when" can be checked in the simulation.
-3. `npm run smoke` passes. It serves the build on its own port (4174, so it never collides with the evaluator's server), opens it with `?test=1`, starts level 1 with seed 1, runs 60 game seconds at high speed, fails on any runtime error or a blank single-color screen, and saves a screenshot to `harness/smoke/latest.png` (keep `harness/smoke/` in `.gitignore`). Look at that screenshot — Read can open images — and check that it shows what your items should have changed.
+3. `npm run smoke` passes. It serves the build on its own port (4174, so it never collides with the evaluator's server), opens it with `?test=1`, starts level 1 with seed 1, runs 60 game seconds at high speed, fails on any runtime error or a blank single-color screen, and saves a screenshot to `harness/smoke/latest.png` (keep `harness/smoke/` in `.gitignore`). Look at that screenshot — Read can open images — and check that it shows what your items should have changed. If /opt/pw-browsers/chromium exists, launch that browser with executablePath: the browser bundled with your Playwright version usually isn't installed in the cloud.
 4. Go through each "Done when" line of your items yourself.
 
 If no browser is available for the smoke test, say so in `progress.md` and rely on the other three checks.
