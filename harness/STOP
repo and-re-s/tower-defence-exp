@@ -1,0 +1,1 @@
+Evaluator replied NO BROWSER in round 01: playwright MCP looks for Chrome at /opt/google/chrome/chrome, which isn't installed. (Chromium is at /opt/pw-browsers/chromium in this environment, so the playwright MCP config probably needs to point there.) Fix the browser, remove this file, then re-run the evaluator for round 01 (B-001, B-002 are in review).

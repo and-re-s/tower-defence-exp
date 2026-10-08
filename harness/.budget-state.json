@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "phase": "idle",
+  "started_at": 1791478384048,
+  "sessions": {
+    "6d0874f2-a3d9-5db0-847e-590c640bd4de": {
+      "usd": 0.3909532,
+      "by_agent": {
+        "orchestrator": 0.0558,
+        "planner": 0.3351
+      },
+      "by_model": {
+        "claude-sonnet-5-5": 0.0558,
+        "claude-opus-5-5": 0.3351
+      },
+      "main_model": "claude-sonnet-5-5",
+      "unknown_models": [],
+      "background_capped": false,
+      "updated": "2026-10-08T16:55:49.432Z"
+    }
+  },
+  "checkpoints_done": [],
+  "current_round": 1,
+  "last_scored_round": 0,
+  "last_replan_round": 0,
+  "spec_versions": 0,
+  "stalls": 3,
+  "updated": "2026-10-08T16:55:49.434Z"
+}
