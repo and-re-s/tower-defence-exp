@@ -1,0 +1,1 @@
+A browser tower-defense game built with three.js. A low-poly island of hex tiles: waves of enemies march toward a lighthouse, and the player builds and upgrades towers to stop them. It must be a finished game, not a prototype: a main menu, a short tutorial, several levels, sound, and a visual style of its own.
