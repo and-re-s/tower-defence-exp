@@ -1,3 +1,5 @@
 game/node_modules/
 game/dist/
 harness/smoke/
+
+.DS_Store
