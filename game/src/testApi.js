@@ -6,7 +6,7 @@ export function installTestApi(ctl) {
   if (new URLSearchParams(location.search).get('test') !== '1') return;
   window.__game = {
     ready: true,
-    state: () => ({ ...ctl.game.snapshot(), fps: Math.round(ctl.fps()), camera: ctl.rig.info(), muted: audio.isMuted() }),
+    state: () => ({ ...ctl.game.snapshot(), fps: Math.round(ctl.fps()), camera: ctl.rig.info(), muted: audio.isMuted(), audio: audio.status() }),
     start: ({ level = 1, seed = 1 } = {}) => ctl.start(level, seed),
     pause: () => ctl.game.pause(),
     resume: () => ctl.game.resume(),

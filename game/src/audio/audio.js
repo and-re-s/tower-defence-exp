@@ -15,8 +15,12 @@ function ensureContext() {
   ctx = new AC();
   master = ctx.createGain();
   master.gain.value = muted ? 0 : 0.8;
-  master.connect(ctx.destination);
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -14;
+  comp.ratio.value = 4;
+  master.connect(comp).connect(ctx.destination);
   startSurf();
+  scheduleGulls();
   return ctx;
 }
 
@@ -87,37 +91,92 @@ function startSurf() {
   src.connect(f).connect(g).connect(master);
   src.start();
   lfo.start();
+  // second, higher and slower layer so the swells never line up
+  const src2 = ctx.createBufferSource();
+  src2.buffer = noiseBuffer();
+  src2.loop = true;
+  src2.loopStart = 1.3;
+  const f2 = ctx.createBiquadFilter();
+  f2.type = 'bandpass';
+  f2.frequency.value = 1400;
+  f2.Q.value = 0.5;
+  const g2 = ctx.createGain();
+  g2.gain.value = 0.012;
+  const lfoB = ctx.createOscillator();
+  lfoB.frequency.value = 0.07;
+  const lfoBGain = ctx.createGain();
+  lfoBGain.gain.value = 0.012;
+  lfoB.connect(lfoBGain).connect(g2.gain);
+  src2.connect(f2).connect(g2).connect(master);
+  src2.start();
+  lfoB.start();
+}
+
+let gullTimer = 0; // eslint-disable-line no-unused-vars
+/** Faint distant gulls every so often; timing uses a fixed LCG so no Math.random. */
+function scheduleGulls() {
+  let seed = 777;
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+    return (seed >>> 8) / 16777216;
+  };
+  const cry = () => {
+    if (ctx && !muted && ctx.state === 'running') {
+      const base = 1500 + next() * 500;
+      tone(base, 0.28, { type: 'triangle', vol: 0.012, slideTo: base * 0.72, attack: 0.04 });
+      tone(base * 1.1, 0.22, { type: 'triangle', vol: 0.01, slideTo: base * 0.8, attack: 0.04, delay: 0.3 });
+    }
+    gullTimer = setTimeout(cry, 9000 + next() * 14000);
+  };
+  gullTimer = setTimeout(cry, 6000);
+}
+
+// Deterministic pitch variation so repeated sounds (hits, shots) never sound machine-gunned.
+let variant = 0;
+const vary = () => { variant = (variant * 7 + 3) % 11; return 0.92 + variant * 0.016; };
+
+/** Kalimba-like pluck: a bright sine with a short inharmonic overtone. */
+function pluck(freq, vol, delay = 0) {
+  tone(freq, 0.3, { type: 'sine', vol, delay, attack: 0.003 });
+  tone(freq * 4.1, 0.08, { type: 'sine', vol: vol * 0.3, delay, attack: 0.002 });
 }
 
 const SOUNDS = {
   build() {
     tone(95, 0.22, { type: 'triangle', vol: 0.3, slideTo: 55 });
     noise(0.14, { freq: 700, vol: 0.2 });
+    noise(0.35, { freq: 4500, kind: 'highpass', vol: 0.05, delay: 0.1 }); // sand hiss
     tone(520, 0.1, { type: 'triangle', vol: 0.08, delay: 0.1 });
   },
   refuse() {
-    tone(140, 0.16, { type: 'square', vol: 0.07, slideTo: 100 });
-    noise(0.08, { freq: 300, vol: 0.12 });
+    // lower woody thunk
+    tone(150, 0.14, { type: 'triangle', vol: 0.2, slideTo: 80 });
+    tone(110, 0.1, { type: 'square', vol: 0.04, slideTo: 70 });
+    noise(0.06, { freq: 420, vol: 0.14 });
   },
   harpoon_fire() {
-    tone(900, 0.12, { type: 'triangle', vol: 0.07, slideTo: 280 });
-    noise(0.09, { freq: 1800, q: 1.5, kind: 'bandpass', vol: 0.1 });
-    tone(150, 0.1, { type: 'sine', vol: 0.12, delay: 0.03, slideTo: 90 });
+    const k = vary();
+    tone(1100 * k, 0.1, { type: 'triangle', vol: 0.07, slideTo: 300 }); // thwip
+    noise(0.08, { freq: 2200, q: 1.5, kind: 'bandpass', vol: 0.1 });
+    tone(140 * k, 0.14, { type: 'sine', vol: 0.16, delay: 0.05, slideTo: 70 }); // thunk
+    noise(0.05, { freq: 500, vol: 0.1, delay: 0.05 });
   },
   enemy_hit() {
-    noise(0.05, { freq: 2200, q: 2, kind: 'bandpass', vol: 0.12 });
-    tone(340, 0.05, { type: 'square', vol: 0.03 });
+    const k = vary();
+    noise(0.04, { freq: 2600 * k, q: 3, kind: 'bandpass', vol: 0.12 }); // wet click
+    tone(520 * k, 0.04, { type: 'sine', vol: 0.05, slideTo: 260 });
   },
   enemy_death() {
-    tone(420, 0.2, { type: 'sine', vol: 0.12, slideTo: 120 });
-    noise(0.16, { freq: 1200, kind: 'lowpass', vol: 0.14 });
-    tone(760, 0.08, { type: 'triangle', vol: 0.05, delay: 0.06 });
+    const k = vary();
+    tone(520 * k, 0.16, { type: 'sine', vol: 0.12, slideTo: 140 }); // splash-pop
+    noise(0.2, { freq: 1500, kind: 'lowpass', vol: 0.14 });
+    tone(900 * k, 0.05, { type: 'sine', vol: 0.07, slideTo: 1500, delay: 0.14 });
   },
   ui_click() {
-    tone(660, 0.16, { type: 'triangle', vol: 0.16 });
-    tone(990, 0.12, { type: 'sine', vol: 0.06, delay: 0.02 });
+    pluck(659.3, 0.15);
+    pluck(987.8, 0.07, 0.05);
   },
-  ui_hover() { tone(880, 0.07, { type: 'triangle', vol: 0.05 }); },
+  ui_hover() { pluck(880, 0.045); },
   lighthouse_hit() {
     // deep cracked bell: inharmonic partials plus a brittle noise crack
     [[110, 0.3], [221, 0.18], [304, 0.12], [451, 0.08]].forEach(([f, v]) => tone(f, 1.4, { vol: v, attack: 0.004 }));
@@ -125,20 +184,27 @@ const SOUNDS = {
     noise(0.12, { freq: 2600, kind: 'highpass', vol: 0.18 });
   },
   wave_start() {
-    tone(98, 1.5, { type: 'sawtooth', vol: 0.09, attack: 0.25 });
-    tone(98 * 1.007, 1.5, { type: 'sawtooth', vol: 0.09, attack: 0.25 });
+    // foghorn: two detuned saws through a falling-formant lowpass, plus a breath of air
+    [82.4, 82.4 * 1.006, 123.5].forEach((f, i) => tone(f, 2.1, { type: 'sawtooth', vol: i === 2 ? 0.03 : 0.07, attack: 0.3, slideTo: f * 0.97 }));
+    noise(1.6, { freq: 380, vol: 0.05 });
   },
   wave_clear() {
-    tone(1318, 1.2, { vol: 0.12 });
-    tone(1760, 1.0, { vol: 0.06 });
-    tone(1318, 1.2, { vol: 0.1, delay: 0.32 });
+    // ship's bell, two strikes
+    [0, 0.42].forEach((d) => {
+      tone(1318, 1.4, { vol: 0.11, delay: d });
+      tone(1760 * 1.003, 1.0, { vol: 0.05, delay: d });
+      tone(3320, 0.4, { vol: 0.03, delay: d });
+    });
   },
   victory() {
-    [220, 277.2, 329.6, 440, 554.4].forEach((f, i) => tone(f, 2.6, { vol: 0.1, attack: 0.3 + i * 0.05 }));
+    [220, 277.2, 329.6, 440, 554.4, 659.3].forEach((f, i) => tone(f, 3.2, { vol: 0.085, attack: 0.3 + i * 0.07 }));
+    pluck(1318.5, 0.1, 1.2);
+    pluck(1661.2, 0.08, 1.45);
   },
   defeat() {
-    tone(150, 2.6, { type: 'sawtooth', vol: 0.1, slideTo: 62, attack: 0.1 });
-    tone(151.2, 2.6, { type: 'sawtooth', vol: 0.08, slideTo: 63, attack: 0.1 });
+    // slow descending foghorn
+    [[150, 62], [151.2, 63]].forEach(([f, to]) => tone(f, 3.2, { type: 'sawtooth', vol: 0.09, slideTo: to, attack: 0.2 }));
+    tone(75, 3.2, { type: 'sine', vol: 0.12, slideTo: 40, attack: 0.2 });
   },
 };
 
@@ -157,6 +223,8 @@ export const audio = {
   log: () => log.slice(-50),
   clearLog() { log.length = 0; },
   isMuted: () => muted,
+  /** For the test API: whether audio can actually be heard. */
+  status: () => ({ muted, running: !!ctx && ctx.state === 'running' }),
   setMuted(m) {
     muted = m;
     try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch { /* ignore */ }

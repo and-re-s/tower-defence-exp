@@ -23,3 +23,11 @@ Decisions: B-005 was mostly built in rounds 1-2 (title with Play, HUD chips, end
 Known issues: salvage sink missing until more towers; a 6-post fixed layout loses outright (not just a few Light).
 Tried and reverted: hp x1.15/1.2 left 8 posts with zero leaks.
 How to test: `start({level:1,seed:1}); pause();` click a hex, press 1 -> tower built. `skipToWave(4)`, `win()`, `lose()`; npm test has layout tuning and determinism tests.
+
+## Round 04
+Items: B-039 → review, B-007 → review (B-008 left for next round to keep the round at ~3 points of risk)
+Changes: title block moved to the left, lamp and beam clear; victory "/ 20" in Fredoka; "Next wave" stays visible but disabled while paused; skipToWave returns false outside 1..waveCount; level 1 waves 4-6 softened (5 posts lose, 6 win with 7 Light, 7 win with 20). Sound pass: kalimba plucks for UI, woody refuse thunk, thwip-thunk harpoon, wet clicks and splash-pops with deterministic pitch variation, sand hiss on build, foghorn, two-strike ship's bell, richer victory/defeat, compressor on the master bus, second surf layer, faint gulls.
+Decisions: most B-007 ids already existed from round 2; this round was the quality pass plus ambience layers. `state().audio` = {muted, running} lets the evaluator verify the context started after a gesture. Gull cries use a fixed LCG (no Math.random).
+Known issues: sounds cannot be listened to in the cloud, only logged; cannon/bell/upgrade/sell sounds wait for their items; music and separate volumes are B-030/B-031.
+Tried and reverted: nothing.
+How to test: `start({level:1,seed:1})`, click a button then read `state().audio.running` (true) and `audioLog()` ids (ui_click, build, harpoon_fire, enemy_hit, enemy_death, wave_start, wave_clear, lighthouse_hit, victory, defeat via win()/lose()); press M, `state().muted`, reload keeps it. Pause, `#next-wave` is disabled. `skipToWave(0)`/`(7)` return false. npm test has the new tuning test.

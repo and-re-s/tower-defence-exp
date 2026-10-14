@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-039 · fix · todo · S — Round 03 minor bugs bundle
+### B-039 · fix · review · S — Round 03 minor bugs bundle
 Found: round-03 (minor)
 Repro/Done when:
 - the victory panel "Light left: 20 / 20" still renders the "/ 20" in Atkinson Hyperlegible with a slashed zero ("2Ø"); use Fredoka for every number in panels and chips ("Next in 20s" too if it shows it);
@@ -24,7 +24,7 @@ Repro/Done when:
 
 ## M1 — full core
 
-### B-007 · M1 · todo · M — Sound pass: every action, surf ambience, mute
+### B-007 · M1 · review · M — Sound pass: every action, surf ambience, mute
 Why: the brief requires sound; pillar "A toy you want to touch".
 Behavior: All sounds are synthesized per the spec: surf ambience with slow swells, UI plucks on hover and click, a refuse thunk, build thud, harpoon thwip-thunk, wet hit clicks, death splash-pop, lighthouse cracked-bell hit, foghorn at wave start, ship's bell on wave clear, victory chord and defeat foghorn. A mute button in the HUD and the M key toggle all audio.
 Done when:
