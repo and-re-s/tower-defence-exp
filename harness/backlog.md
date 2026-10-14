@@ -7,16 +7,11 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-039 · fix · review · S — Round 03 minor bugs bundle
-Found: round-03 (minor)
+### B-040 · fix · todo · S — Round 04 minor bugs bundle
+Found: round-04 (minor)
 Repro/Done when:
-- the victory panel "Light left: 20 / 20" still renders the "/ 20" in Atkinson Hyperlegible with a slashed zero ("2Ø"); use Fredoka for every number in panels and chips ("Next in 20s" too if it shows it);
-- `skipToWave(0)` and `skipToWave(7)` (waveCount 6) return true although test-api.md says 1..waveCount; return false and change nothing outside the range;
-- difficulty cliff on level 1 (seed 1, best-placed posts built once at start with 250 granted salvage, 16x): 3 posts lose at wave 4, 6 posts lose at wave 6 (Light 0, 622 salvage unspent), 8 posts win with Light 19; smooth it so 6 posts end with a few Light left, not at 0;
-- the "Next wave" button disappears while `paused` (Space still works); keep it visible but disabled, or keep it;
-- the title subtitle pill sits over the lighthouse lamp on the menu (01-menu.jpg); move the title block clear of the lamp.
-
-
+- with `start({level:1,seed:1}); pause();` the "Next wave" button is disabled but Space still calls the wave (wave 0 -> 1, phase `wave`) while paused; make both consistent (Space also ignored while paused, or button enabled);
+- `setTimeScale(16)` then `start()` or Play from the menu keeps `timeScale` 16 in `state()`; reset it to 1 on start/Retry/Play.
 
 
 
@@ -24,13 +19,6 @@ Repro/Done when:
 
 ## M1 — full core
 
-### B-007 · M1 · review · M — Sound pass: every action, surf ambience, mute
-Why: the brief requires sound; pillar "A toy you want to touch".
-Behavior: All sounds are synthesized per the spec: surf ambience with slow swells, UI plucks on hover and click, a refuse thunk, build thud, harpoon thwip-thunk, wet hit clicks, death splash-pop, lighthouse cracked-bell hit, foghorn at wave start, ship's bell on wave clear, victory chord and defeat foghorn. A mute button in the HUD and the M key toggle all audio.
-Done when:
-- `audioLog()` shows a distinct id for each of: ui click, refuse, build, harpoon fire, enemy hit, enemy death, lighthouse hit, wave start, wave clear, victory, defeat;
-- ambience starts after the first user gesture and loops without gaps; no audio errors in `errors()`;
-- mute (button and M) silences everything and persists across reloads.
 
 ### B-008 · M1 · todo · M — Cliff Cannon and the high-ground rule
 Why: pillar "The island is the board"; the first real tower choice (single target vs splash).

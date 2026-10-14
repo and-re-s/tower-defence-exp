@@ -9,3 +9,5 @@ One line per item.
 - B-038 · M0 · S — Round 02 minor bugs bundle — done round-03 (91629fb)
 - B-005 · M0 · S — Title screen and the in-game HUD — done round-03 (91629fb)
 - B-006 · M0 · S — Test API game helpers — done round-03 (91629fb)
+- B-039 · M0 · S — Round 03 minor bugs bundle — done round-04 (f744902)
+- B-007 · M1 · M — Sound pass: every action, surf ambience, mute — done round-04 (f744902)
