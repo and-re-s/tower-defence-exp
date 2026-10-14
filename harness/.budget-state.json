@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "phase": "idle",
+  "phase": "running",
   "started_at": 1791478384048,
   "sessions": {
     "6d0874f2-a3d9-5db0-847e-590c640bd4de": {
@@ -24,6 +24,8 @@
   "last_scored_round": 0,
   "last_replan_round": 0,
   "spec_versions": 0,
-  "stalls": 3,
-  "updated": "2026-10-08T16:55:49.434Z"
+  "stalls": 0,
+  "updated": "2026-10-14T11:47:18.225Z",
+  "armed_at": 1791978438223,
+  "start_id": "start-mv81p07j"
 }

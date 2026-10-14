@@ -1,0 +1,6 @@
+[     167ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead. @ http://localhost:4173/assets/index-CK8UJPWX.js:0
+[    1193ms] [WARNING] [.WebGL-0x381c0011bc00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://localhost:4173/:0
+[    1504ms] [WARNING] [.WebGL-0x381c0011bc00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://localhost:4173/:0
+[    1761ms] [WARNING] [.WebGL-0x381c0011bc00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels @ http://localhost:4173/:0
+[    1958ms] [WARNING] [.WebGL-0x381c0011bc00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat) @ http://localhost:4173/:0
+[    2152ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:4173/favicon.ico:0

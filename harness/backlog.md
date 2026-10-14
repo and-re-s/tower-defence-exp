@@ -7,22 +7,15 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-001 · M0 · review · M — Driftwood Cove diorama: island, path, lighthouse, dusk light
-Why: pillars "The island is the board" and "A toy you want to touch"; the first screenshot sets the style for the whole project.
-Behavior: Level 1 (Driftwood Cove) renders as a small round hex island (radius ~6–7) floating in a dark sea: sand, grass and rock tiles at different heights with per-tile color jitter and a few props, a packed-sand path winding from one beach to the lighthouse, and the lighthouse with a glowing amber lamp and a sweeping beam. Warm low sun from the west with soft shadows, hemisphere fill, Deep Sea fog. The player can rotate the camera in 60° steps (Q/E), zoom with the wheel and pan within limits.
-Done when:
-- at 1280×720 the whole island is visible at the default zoom, and tiles show at least 3 distinct terrain colors from the spec palette and at least 3 different heights;
-- the path is a continuous chain of hexes from a beach hex to the lighthouse hex, readable as a road from the default camera; `state()` exposes the path as a list of hex coordinates and the lighthouse position;
-- shadows are visible on the tiles, the lamp is emissive amber, and the beam visibly rotates over time (two screenshots a few game seconds apart differ);
-- Q/E rotate the view by 60° with an eased transition; the wheel zooms between a close view and the full island; no default grey materials anywhere.
-
-### B-002 · M0 · review · M — Scuttlers march on the lighthouse; the lamp can go out
-Why: pillar "Hold the light"; the threat half of the core loop.
-Behavior: Scuttlers (wide, flat, dark-shelled crabs with Brine Glow spots) emerge from the surf at the spawn beach and crawl along the path to the lighthouse with a little leg/bob animation. Each one that reaches the lighthouse removes 1 Light (of 20), the lamp flickers and a hit sound plays. At 0 Light the level is lost and a defeat screen appears.
-Done when:
-- `state()` exposes `light`, and `enemies` with id, type, hp and world position; enemy positions advance along the path over game time and never leave it;
-- an enemy reaching the lighthouse disappears and reduces `light` by its leak value; `audioLog()` shows a lighthouse-hit sound;
-- with no towers built, the level ends with `screen: 'lost'` and a visible defeat screen with a Retry button that restarts the level with Light back at 20.
+### B-037 · fix · todo · S — Round 01 minor bugs bundle
+Found: round-01 (minor)
+Repro/Done when:
+- `start()` and Retry reset the camera to the default view (yaw 0, zoom 1, pan 0,0); verify with `state().camera` after zooming/rotating/panning and then calling `start({level:1,seed:1})` or clicking Retry or Play from the menu;
+- `audioLog()` is cleared when a run starts (after `start()` the log has no entries from the previous run, and its `time` values are monotonic);
+- after `pause()` then `step(n)` the rendered frame shows freshly spawned enemies at full size (currently a screenshot right after `step(780)` shows only tiny white eye dots; a further `step(60)` shows the crabs), so flip-book testing works: spawn/emerge visuals must advance with the stepped game time;
+- the fully zoomed-in camera (zoom 0) shows about 3-4 hexes across the screen and the beam as a hard-edged yellow wedge covering a quarter of the screen: raise the minimum zoom distance so the close view still shows a tower and its neighbours (about 8-10 hexes across);
+- the title subtitle "Hold the lamp. Keep the dark at bay." is legible over the island and beam (currently sand text on sand tiles and the yellow beam crosses it);
+- favicon request returns 404 in the console: add a favicon.
 
 ### B-003 · M0 · todo · M — Build Harpoon Posts with salvage
 Why: pillar "The island is the board"; the player's half of the core loop.
