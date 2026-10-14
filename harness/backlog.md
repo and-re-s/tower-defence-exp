@@ -7,34 +7,25 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-045 · fix · review · S — Round 09 minor bugs bundle
-Found: round-09 (minor)
-Repro/Done when:
-- at 400x700 (portrait) the island is not visible at all, only the lighthouse as a dot (round-09/portrait-400.jpg), and the tower bar is clipped (rect left -41, right 441 in a 400 px viewport); the camera fit must keep the whole island on screen and the bar inside the viewport at 400x700 and 500x350;
-- at 500x350 and 640x420 the island is rendered visibly darker/desaturated than at 1280x720 (vp-500.jpg, menu-640.jpg vs 02-start.jpg); same lighting and fog at every viewport size;
-- a cloaked Mistwalker outside lantern light is almost impossible to see (cloak-vs-revealed.jpg, left): add a clearly visible but faint cue (soft shimmer ring or ripple on the ground) so the player can tell something is coming without being able to target it.
+### B-046 · fix · todo · S — Sky dome shader does not compile (no sky, no stars, GL errors every frame)
+Found: round-10 (major)
+Repro: open http://localhost:4173/ and read the console: `THREE.WebGLProgram: Shader Error ... ERROR: 0:160: '#' : invalid character` for the ShaderMaterial in src/render/daylight.js line 40, followed by `WebGL: INVALID_OPERATION: useProgram: program not valid` on every frame until "too many errors". The `#include <colorspace_fragment>` sits on the same line after `gl_FragColor = ...;`, so the preprocessor directive is not at the start of a line.
+Done when:
+- the console shows no THREE.WebGLProgram error and no useProgram warnings on the title, in a level and at night;
+- the sky dome and stars are actually rendered (a screenshot of the night with the camera zoomed in/out shows the gradient and stars, or the dome is visible somewhere), or the dome is removed and the spec/progress claims are dropped.
 
----
+### B-047 · fix · todo · S — Round 10 minor bugs bundle
+Found: round-10 (minor)
+Repro/Done when:
+- at 400x700 the next-wave preview chip is clipped by the right edge (preview-chip rect right 433 in a 400 px viewport; vp-400x700.jpg), at 500x350 it collapses to an icon with "8"; HUD chips must fit or wrap inside the viewport;
+- at night (waves 5-6) Harpoon Posts and the cannon are near-black silhouettes against dark tiles (03-busy.jpg); give towers a rim or ambient lift so they are readable at a glance;
+- golden hour at wave 1 is not distinguishable from round 9's lighting (02-start.jpg: deep navy sea, no warm sky tint); the sea and fog at timeOfDay 0 should read warm/golden so the dusk transition has a starting point;
+- clicking the empty scene while the pause menu is open silently resumes the game (probably intended, but not stated anywhere; Esc/Resume are the documented ways); pressing F while the pause menu is open changes the speed;
+- the cloaked Mistwalker ripple looks like the spawn beach pulse rings (mist-cloaked.jpg); make it distinct (different colour or a wake).
 
 ## M1 — full core
 
 
-
-### B-013 · M1 · review · S — Pause menu, game speed and hotkeys
-Why: control and comfort; needed for every later level.
-Behavior: Esc or P opens a pause menu (Resume, Restart, Quit to menu) and freezes all motion; F or the HUD button cycles speed 1×/2×/3×; 1–4 pick a tower to place at the hovered hex; Space calls the next wave.
-Done when:
-- while paused, `state().time` doesn't advance and enemies, projectiles and particles don't move;
-- speed 3× makes `time` advance about 3 times faster than 1× over the same real time; the current speed is shown in the HUD;
-- Restart from the pause menu gives a fresh run of the same level; Quit returns to the title screen with no leftover enemies or towers.
-
-### B-014 · M1 · review · M — From dusk to night across the waves
-Why: pillar "Hold the light": the night is the clock, and it's the strongest image this game has.
-Behavior: The level starts at golden hour; each wave lowers the sun in eased steps through sunset and blue hour to night. At night the sun is dim and cold, the sky darkens to Deep Sea with stars, and the lighthouse lamp, lanterns and enemy glow become the main light sources. Mistwalkers appear only from dusk on.
-Done when:
-- `state()` exposes a time-of-day value that advances with each wave and reaches night on the last wave;
-- screenshots of wave 1 and of the last wave of a level show clearly different lighting (warm long shadows vs dark scene with glowing lamp and enemies), with the transition eased, not instant;
-- the island stays readable at night: path, towers and enemies are distinguishable in a night screenshot.
 
 ### B-015 · M1 · todo · M — Broodmother and Gloom Gulls
 Why: varied situations — burst threats and an air route that ignores the path.

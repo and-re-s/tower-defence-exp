@@ -21,3 +21,6 @@ One line per item.
 - B-044 · M0 · S — Round 08 minor bugs bundle — done round-09 (944b19d)
 - B-011 · M1 · M — Lantern and the Mistwalker — done round-09 (944b19d)
 - B-012 · M1 · S — Next-wave preview and calling waves early — done round-09 (944b19d)
+- B-045 · M0 · S — Round 09 minor bugs bundle — done round-10 (ffb34c9)
+- B-013 · M1 · S — Pause menu, game speed and hotkeys — done round-10 (ffb34c9)
+- B-014 · M1 · M — From dusk to night across the waves — done round-10 (ffb34c9)

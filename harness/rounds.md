@@ -10,3 +10,4 @@
 | 07 | $6.78 | – (not due) | B-042, B-009 fix, B-010 → review; build, tests, smoke ok | PASS · Total 23 · since best 0 (B-009, B-042 verified; B-010 failed: no visible armor spark) |
 | 08 | $8.24 | – (not due) | B-043, B-010 → review; build, tests, smoke ok | PASS · Total 23 · since best 1 |
 | 09 | $9.21 | – (not due) | B-044, B-011, B-012 → review; build, tests, smoke ok | PASS · Total 24 · since best 0 |
+| 10 | $10.63 | – (not due) | B-045, B-013, B-014 → review; build, tests, smoke ok | PASS · Total 26 · since best 0 (new major B-046: sky shader fails to compile) |
