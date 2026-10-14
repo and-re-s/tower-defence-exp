@@ -27,7 +27,19 @@ function makeKit() {
   claw.translate(0, 0, 0.11);
   const pool = new THREE.CircleGeometry(0.4, 16);
   pool.rotateX(-Math.PI / 2);
-  return { mats, geos: { body, carapace, spot, leg, claw, pool } };
+  // Skitterer: a long thin shrimp, built from a chain of small segments.
+  const seg = new THREE.IcosahedronGeometry(0.5, 0);
+  seg.scale(0.2, 0.15, 0.3);
+  const tail = new THREE.ConeGeometry(0.1, 0.3, 4);
+  tail.rotateX(-Math.PI / 2);
+  const feeler = new THREE.CylinderGeometry(0.008, 0.016, 0.42, 3);
+  feeler.rotateX(Math.PI / 2);
+  feeler.translate(0, 0, 0.21);
+  const sleg = new THREE.BoxGeometry(0.15, 0.02, 0.022);
+  sleg.translate(0.075, 0, 0);
+  mats.shrimp = new THREE.MeshStandardMaterial({ color: 0x4a3358, flatShading: true, roughness: 0.5 });
+  mats.shrimpBelly = new THREE.MeshStandardMaterial({ color: PAL.apricot, flatShading: true, roughness: 0.6 });
+  return { mats, geos: { body, carapace, spot, leg, claw, pool, seg, tail, feeler, sleg } };
 }
 
 function buildScuttler(kit) {
@@ -67,7 +79,50 @@ function buildScuttler(kit) {
   const pool = new THREE.Mesh(kit.geos.pool, kit.mats.pool);
   pool.position.y = 0.02;
   g.add(pool);
-  return { group: g, legs, claws };
+  return { group: g, legs, claws, spd: 12, scale: MODEL_SCALE };
+}
+
+function buildSkitterer(kit) {
+  const g = new THREE.Group();
+  const m = (geo, mat, x, y, z, sc = 1) => {
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    mesh.scale.setScalar(sc);
+    mesh.castShadow = true;
+    g.add(mesh);
+    return mesh;
+  };
+  m(kit.geos.seg, kit.mats.shrimp, 0, 0.2, 0.2, 1.1); // head
+  m(kit.geos.seg, kit.mats.shrimp, 0, 0.21, -0.06, 1.05);
+  m(kit.geos.seg, kit.mats.shrimpBelly, 0, 0.17, -0.3, 0.85);
+  m(kit.geos.seg, kit.mats.shrimpBelly, 0, 0.12, -0.5, 0.6);
+  m(kit.geos.tail, kit.mats.shrimpBelly, 0, 0.1, -0.7);
+  for (const x of [-0.06, 0.06]) m(kit.geos.spot, kit.mats.glow, x, 0.3, 0.3, 0.9);
+  m(kit.geos.spot, kit.mats.glow, 0, 0.33, 0.0, 0.8);
+  const claws = [-1, 1].map((s) => {
+    const pivot = new THREE.Group();
+    pivot.position.set(s * 0.05, 0.24, 0.42);
+    pivot.rotation.y = s * 0.28;
+    pivot.add(new THREE.Mesh(kit.geos.feeler, kit.mats.shrimpBelly));
+    g.add(pivot);
+    return { pivot, s };
+  });
+  const legs = [];
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < 4; i++) {
+      const pivot = new THREE.Group();
+      pivot.position.set(s * 0.1, 0.1, 0.2 - i * 0.17);
+      pivot.scale.x = s;
+      pivot.add(new THREE.Mesh(kit.geos.sleg, kit.mats.shrimp));
+      g.add(pivot);
+      legs.push({ pivot, i, s });
+    }
+  }
+  const pool = new THREE.Mesh(kit.geos.pool, kit.mats.pool);
+  pool.position.y = 0.02;
+  pool.scale.setScalar(0.7);
+  g.add(pool);
+  return { group: g, legs, claws, spd: 24, scale: 1.25 };
 }
 
 /** Maintains one model per simulated enemy and animates it on game time. */
@@ -82,17 +137,17 @@ export function createEnemyView(scene) {
     return t ? t.height : 0.05;
   }
 
-  function pose(v, e, level, time) {
+  function pose(v, e, level, time, gameTime) {
     const g = v.model.group;
-    const age = time - v.born;
+    const age = gameTime - e.born; // build-up runs on game time so stepping a paused game shows it too
     const phase = e.id * 1.7;
-    const spd = 12;
+    const spd = v.model.spd;
     const emerge = easeOut(Math.min(1, age / EMERGE_TIME));
     const bob = Math.abs(Math.sin(time * spd * 0.5 + phase)) * 0.025;
     g.position.set(e.x, heightAt(level, e.x, e.z) + bob - (1 - emerge) * 0.25, e.z);
     g.rotation.y = e.heading;
     g.rotation.z = Math.sin(time * spd * 0.5 + phase) * 0.05;
-    g.scale.setScalar(MODEL_SCALE * (0.4 + 0.6 * emerge));
+    g.scale.setScalar(v.model.scale * (0.4 + 0.6 * emerge));
     for (const l of v.model.legs) {
       const w = Math.sin(time * spd + phase + l.i * 2.1 + (l.s > 0 ? Math.PI : 0));
       l.pivot.rotation.y = w * 0.4 * l.s;
@@ -110,12 +165,12 @@ export function createEnemyView(scene) {
           alive.add(e.id);
           let v = views.get(e.id);
           if (!v) {
-            v = { model: buildScuttler(kit), born: time, last: e };
+            v = { model: e.type === 'skitterer' ? buildSkitterer(kit) : buildScuttler(kit), last: e };
             scene.add(v.model.group);
             views.set(e.id, v);
           }
           v.last = { id: e.id, x: e.x, z: e.z, heading: e.heading };
-          pose(v, e, level, time);
+          pose(v, e, level, time, game.time);
         }
       }
       for (const [id, v] of views) {
@@ -132,7 +187,7 @@ export function createEnemyView(scene) {
           scene.remove(g);
           dying.splice(i, 1);
         } else {
-          g.scale.setScalar(Math.max(0.001, MODEL_SCALE * (1 - easeOut(t))));
+          g.scale.setScalar(Math.max(0.001, d.v.model.scale * (1 - easeOut(t))));
           g.position.y += 0.012;
         }
       }

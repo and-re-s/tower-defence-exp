@@ -23,7 +23,9 @@ export function createUI(root, game, actions) {
   const end = el(`<div id="end" class="hidden"><div class="panel"><h2></h2><p class="sub"></p>
     <div class="row"><button class="btn" id="retry">Retry</button><button class="btn quiet" id="to-menu">Menu</button></div></div></div>`);
   const mute = el(`<button id="mute" aria-label="Toggle sound"></button>`);
-  ui.append(edge, lightChip, title, end, mute);
+  const hudRow = el('<div id="hud-row"></div>');
+  hudRow.appendChild(lightChip);
+  ui.append(edge, hudRow, title, end, mute);
 
   const q = (sel, r = ui) => r.querySelector(sel);
   const lightVal = q('#light-val');
@@ -52,6 +54,8 @@ export function createUI(root, game, actions) {
   let shownScreen = '';
   let pulseTimer = 0;
   return {
+    root: ui,
+    hudRow,
     pulse() {
       edge.classList.add('on');
       lightChip.classList.add('bump');

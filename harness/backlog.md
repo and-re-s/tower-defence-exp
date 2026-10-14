@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-037 · fix · todo · S — Round 01 minor bugs bundle
+### B-037 · fix · review · S — Round 01 minor bugs bundle
 Found: round-01 (minor)
 Repro/Done when:
 - `start()` and Retry reset the camera to the default view (yaw 0, zoom 1, pan 0,0); verify with `state().camera` after zooming/rotating/panning and then calling `start({level:1,seed:1})` or clicking Retry or Play from the menu;
@@ -17,7 +17,7 @@ Repro/Done when:
 - the title subtitle "Hold the lamp. Keep the dark at bay." is legible over the island and beam (currently sand text on sand tiles and the yellow beam crosses it);
 - favicon request returns 404 in the console: add a favicon.
 
-### B-003 · M0 · todo · M — Build Harpoon Posts with salvage
+### B-003 · M0 · review · M — Build Harpoon Posts with salvage
 Why: pillar "The island is the board"; the player's half of the core loop.
 Behavior: The player starts with 150 salvage. Hovering a hex outlines it amber if buildable (sand, grass, rock, empty) or coral if not. Clicking a buildable hex and choosing "Harpoon Post" (cost 50) places a tall wooden post with a ballista top; it turns to face and fires a visible harpoon at the first enemy in range (3.5 hexes; +1 on rock). Kills give salvage, which visibly updates on the HUD.
 Done when:
@@ -26,7 +26,7 @@ Done when:
 - the tower visibly rotates toward its target and fires a projectile that travels to the enemy; enemies take damage and die, and each kill adds salvage;
 - the range ring is visible while hovering a hex in build mode, and is larger on rock tiles.
 
-### B-004 · M0 · todo · M — Six waves, victory, and play again
+### B-004 · M0 · review · M — Six waves, victory, and play again
 Why: completes the loop "start → play → win or lose → play again".
 Behavior: Driftwood Cove has 6 scripted waves of Scuttlers and Skitterers (thin, fast shrimp) with growing counts. Between waves there is a short breather with a "Next wave" button (and Space). Clearing a wave grants a bonus. After the last wave is cleared with Light above 0, a victory screen shows the Light left and buttons Retry and Menu.
 Done when:

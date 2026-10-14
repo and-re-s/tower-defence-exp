@@ -2,8 +2,12 @@ import { SQRT3 } from './hex.js';
 import { createRng } from './rng.js';
 import { buildLevel, pointOnPath } from './levels.js';
 import { ENEMY_TYPES } from './enemies.js';
+import { TICK } from './clock.js';
+import { BUILDABLE_TERRAIN, TOWER_TYPES, towerRange } from './towers.js';
+import { updateProjectiles, updateTowers } from './combat.js';
+import { hexKey } from './hex.js';
 
-export const TICK = 1 / 60;
+export { TICK };
 const round = (v, n = 3) => Math.round(v * 10 ** n) / 10 ** n;
 
 /** Pure simulation: no rendering, no DOM. Rendering and audio read it and drain `events`. */
@@ -18,6 +22,8 @@ export class Game {
     this.resumeScreen = 'playing';
     this.level = null;
     this.enemies = [];
+    this.towers = [];
+    this.projectiles = [];
     this.light = 0;
     this.lastLeakTime = -100;
   }
@@ -29,7 +35,13 @@ export class Game {
     this.rng = createRng(seed);
     this.time = 0;
     this.enemies = [];
+    this.towers = [];
+    this.projectiles = [];
+    this.towerAt = new Map();
     this.nextId = 1;
+    this.nextTowerId = 1;
+    this.nextProjectileId = 1;
+    this.kills = 0;
     this.light = this.level.def.startLight;
     this.lightMax = this.level.def.startLight;
     this.salvage = this.level.def.startSalvage;
@@ -38,6 +50,7 @@ export class Game {
     this.phase = 'breather';
     this.breatherLeft = this.level.def.firstBreather;
     this.spawnQueue = [];
+    this.hpScale = 1;
     this.spawnTimer = 0;
     this.screen = 'playing';
     this.events.push({ type: 'levelStart' });
@@ -46,6 +59,8 @@ export class Game {
   toMenu() {
     this.screen = 'menu';
     this.enemies = [];
+    this.towers = [];
+    this.projectiles = [];
   }
 
   pause() {
@@ -61,6 +76,8 @@ export class Game {
     this.time += TICK;
     this.updateWaves();
     this.updateEnemies();
+    updateTowers(this);
+    updateProjectiles(this);
     if (this.light <= 0) {
       this.light = 0;
       this.screen = 'lost';
@@ -84,7 +101,9 @@ export class Game {
         this.spawnTimer += next.gap;
       }
       if (!this.spawnQueue.length && this.enemies.length === 0) {
-        this.events.push({ type: 'waveCleared', wave: this.wave });
+        const bonus = 20 + 5 * this.wave;
+        this.salvage += bonus;
+        this.events.push({ type: 'waveCleared', wave: this.wave, bonus });
         if (this.wave >= def.waves.length) this.phase = 'done';
         else {
           this.phase = 'breather';
@@ -94,10 +113,70 @@ export class Game {
     }
   }
 
+  /** Skips the rest of the breather. Earlier calls pay a bigger bonus. Returns the bonus or -1 if not allowed. */
+  callNextWave() {
+    if ((this.screen !== 'playing' && this.screen !== 'paused') || this.phase !== 'breather') return -1;
+    const bonus = Math.round(Math.max(0, this.breatherLeft) * 1.5);
+    this.salvage += bonus;
+    this.events.push({ type: 'waveCalled', bonus });
+    this.startWave();
+    return bonus;
+  }
+
+  /** Why a tower cannot be built on (q, r) right now, or null if it can. */
+  buildBlocker(type, q, r) {
+    const tile = this.level && this.level.tileMap.get(hexKey(q, r));
+    if (!tile || !TOWER_TYPES[type]) return 'invalid';
+    if (tile.lighthouse) return 'lighthouse';
+    if (!BUILDABLE_TERRAIN.has(tile.terrain)) return tile.terrain === 'path' ? 'path' : 'terrain';
+    if (this.towerAt.has(hexKey(q, r))) return 'occupied';
+    if (this.salvage < TOWER_TYPES[type].cost) return 'salvage';
+    return null;
+  }
+
+  /** Places a tower following the player's rules. Returns { ok, reason }. */
+  build(type, q, r) {
+    if (this.screen !== 'playing' && this.screen !== 'paused') return { ok: false, reason: 'screen' };
+    const reason = this.buildBlocker(type, q, r);
+    if (reason) {
+      this.events.push({ type: 'refuse', reason, q, r });
+      return { ok: false, reason };
+    }
+    const tile = this.level.tileMap.get(hexKey(q, r));
+    const stats = TOWER_TYPES[type];
+    this.salvage -= stats.cost;
+    const tower = {
+      id: this.nextTowerId++, type, q, r, x: tile.x, z: tile.z, y: tile.height, terrain: tile.terrain, tier: 1,
+      range: towerRange(type, tile.terrain), cooldown: 0.4, targetId: 0, angle: 0, spent: stats.cost, born: this.time,
+    };
+    this.towers.push(tower);
+    this.towerAt.set(hexKey(q, r), tower);
+    this.events.push({ type: 'build', towerId: tower.id, towerType: type, q, r });
+    return { ok: true, reason: null, id: tower.id };
+  }
+
+  enemyById(id) {
+    for (const e of this.enemies) if (e.id === id) return e;
+    return null;
+  }
+
+  /** Applies damage; a kill removes the enemy and pays its reward. */
+  hitEnemy(e, damage) {
+    e.hp = Math.max(0, e.hp - damage);
+    this.events.push({ type: 'hit', id: e.id, x: e.x, z: e.z });
+    if (e.hp > 0) return;
+    const reward = ENEMY_TYPES[e.type].reward;
+    this.salvage += reward;
+    this.kills += 1;
+    this.enemies.splice(this.enemies.indexOf(e), 1);
+    this.events.push({ type: 'kill', id: e.id, enemyType: e.type, x: e.x, z: e.z, reward });
+  }
+
   startWave() {
     const wave = this.level.def.waves[this.wave];
     this.wave += 1;
     this.phase = 'wave';
+    this.hpScale = wave.hpScale || 1;
     this.spawnQueue = [];
     for (const g of wave.groups) {
       for (let i = 0; i < g.count; i++) {
@@ -110,7 +189,8 @@ export class Game {
 
   spawnEnemy(type) {
     const stats = ENEMY_TYPES[type];
-    const e = { id: this.nextId++, type, hp: stats.hp, maxHp: stats.hp, s: 0, x: 0, z: 0, heading: 0 };
+    const hp = Math.round(stats.hp * this.hpScale);
+    const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0 };
     pointOnPath(this.level, 0, e);
     this.enemies.push(e);
     this.events.push({ type: 'spawn', id: e.id, enemyType: type });
@@ -170,8 +250,15 @@ export class Game {
       lighthouse: { q: lvl.lighthouse.q, r: lvl.lighthouse.r, x: round(lvl.lighthouse.x), z: round(lvl.lighthouse.z) },
       terrainCounts: terrain,
       heights: [...heights].sort((a, b) => a - b),
+      kills: this.kills,
+      tiles: lvl.tiles.map((t) => ({ q: t.q, r: t.r, terrain: t.terrain, height: t.height, tower: this.towerAt.get(hexKey(t.q, t.r))?.id ?? 0 })),
+      towers: this.towers.map((t) => ({
+        id: t.id, type: t.type, q: t.q, r: t.r, tier: t.tier, range: t.range, terrain: t.terrain, targetId: t.targetId,
+        angleDeg: round((t.angle * 180) / Math.PI, 1),
+      })),
+      projectiles: this.projectiles.map((p) => ({ id: p.id, towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
       enemies: this.enemies.map((e) => ({
-        id: e.id, type: e.type, hp: e.hp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
+        id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
       })),
     });
     return out;

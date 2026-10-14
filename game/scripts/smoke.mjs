@@ -30,8 +30,23 @@ try {
   await page.screenshot({ path: resolve(outDir, 'menu.png') });
 
   await page.evaluate(() => window.__game.start({ level: 1, seed: 1 }));
+  // Build three Harpoon Posts on free hexes next to the path, then call the first wave.
+  const built = await page.evaluate(() => {
+    const g = window.__game;
+    const s = g.state();
+    const near = s.tiles
+      .filter((t) => ['sand', 'grass', 'rock'].includes(t.terrain) && !t.tower)
+      .map((t) => ({ t, d: Math.min(...s.path.map((p) => Math.max(Math.abs(p.q - t.q), Math.abs(p.r - t.r), Math.abs(p.q + p.r - t.q - t.r)))) }))
+      .filter((o) => o.d === 1)
+      .sort((a, b) => b.t.height - a.t.height || a.t.q - b.t.q);
+    let n = 0;
+    for (const { t } of near) { if (n >= 3) break; if (g.build('harpoon', t.q, t.r).ok) n++; }
+    g.callNextWave();
+    return n;
+  });
+  if (built < 3) throw new Error(`only built ${built} towers`);
   await page.evaluate(() => window.__game.setTimeScale(8));
-  await page.waitForFunction(() => window.__game.state().time >= 20 || window.__game.state().screen !== 'playing', null, { timeout: 90000 });
+  await page.waitForFunction(() => window.__game.state().time >= 7 || window.__game.state().screen !== 'playing', null, { timeout: 90000 });
   await page.evaluate(() => window.__game.pause());
   await page.waitForTimeout(300);
   await page.screenshot({ path: resolve(outDir, 'latest.png') });
@@ -60,11 +75,12 @@ try {
   }, shot.toString('base64'));
 
   const errs = await page.evaluate(() => window.__game.errors());
-  console.log(JSON.stringify({ midTime: mid.time, midEnemies: mid.enemies.length, endScreen: end.screen, endTime: end.time, light: end.light, colours: variety, errors: errs, external: requests, fps: end.fps }));
+  console.log(JSON.stringify({ midTime: mid.time, midEnemies: mid.enemies.length, towers: mid.towers.length, kills: mid.kills, endScreen: end.screen, endTime: end.time, light: end.light, colours: variety, errors: errs, external: requests, fps: end.fps }));
   if (errs.length) failed = `runtime errors: ${JSON.stringify(errs)}`;
   else if (variety < 12) failed = `screen looks blank (${variety} colours)`;
   else if (requests.length) failed = `network requests: ${requests.join(', ')}`;
-  else if (mid.enemies.length === 0) failed = 'no enemies on screen at 20s';
+  else if (mid.enemies.length === 0) failed = 'no enemies on screen mid-wave';
+  else if (mid.towers.length !== 3) failed = 'towers missing';
 } catch (e) {
   failed = e.message;
 } finally {

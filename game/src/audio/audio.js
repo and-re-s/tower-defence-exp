@@ -90,6 +90,29 @@ function startSurf() {
 }
 
 const SOUNDS = {
+  build() {
+    tone(95, 0.22, { type: 'triangle', vol: 0.3, slideTo: 55 });
+    noise(0.14, { freq: 700, vol: 0.2 });
+    tone(520, 0.1, { type: 'triangle', vol: 0.08, delay: 0.1 });
+  },
+  refuse() {
+    tone(140, 0.16, { type: 'square', vol: 0.07, slideTo: 100 });
+    noise(0.08, { freq: 300, vol: 0.12 });
+  },
+  harpoon_fire() {
+    tone(900, 0.12, { type: 'triangle', vol: 0.07, slideTo: 280 });
+    noise(0.09, { freq: 1800, q: 1.5, kind: 'bandpass', vol: 0.1 });
+    tone(150, 0.1, { type: 'sine', vol: 0.12, delay: 0.03, slideTo: 90 });
+  },
+  enemy_hit() {
+    noise(0.05, { freq: 2200, q: 2, kind: 'bandpass', vol: 0.12 });
+    tone(340, 0.05, { type: 'square', vol: 0.03 });
+  },
+  enemy_death() {
+    tone(420, 0.2, { type: 'sine', vol: 0.12, slideTo: 120 });
+    noise(0.16, { freq: 1200, kind: 'lowpass', vol: 0.14 });
+    tone(760, 0.08, { type: 'triangle', vol: 0.05, delay: 0.06 });
+  },
   ui_click() {
     tone(660, 0.16, { type: 'triangle', vol: 0.16 });
     tone(990, 0.12, { type: 'sine', vol: 0.06, delay: 0.02 });
@@ -132,6 +155,7 @@ export const audio = {
     SOUNDS[id]();
   },
   log: () => log.slice(-50),
+  clearLog() { log.length = 0; },
   isMuted: () => muted,
   setMuted(m) {
     muted = m;

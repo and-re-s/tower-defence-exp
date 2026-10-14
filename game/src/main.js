@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import './errors.js';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -11,7 +12,12 @@ import { createCameraRig } from './render/cameraRig.js';
 import { buildIsland } from './render/island.js';
 import { buildLighthouse } from './render/lighthouse.js';
 import { createEnemyView } from './render/enemyView.js';
+import { createTowerView } from './render/towerView.js';
+import { createProjectileView } from './render/projectileView.js';
+import { createFx } from './render/fx.js';
+import { createPlacement } from './render/placement.js';
 import { createUI } from './ui/screens.js';
+import { createHud } from './ui/hud.js';
 import { audio } from './audio/audio.js';
 import { installTestApi } from './testApi.js';
 
@@ -21,6 +27,9 @@ const game = new Game();
 const stage = createStage(root);
 const rig = createCameraRig(stage.camera, stage.renderer.domElement);
 const enemyView = createEnemyView(stage.scene);
+const towerView = createTowerView(stage.scene);
+const projectileView = createProjectileView(stage.scene);
+const fx = createFx(stage.scene);
 const previewLevel = buildLevel(1);
 
 let world = null; // { key, island, lighthouse }
@@ -41,6 +50,11 @@ function showWorld() {
 
 function start(level, seed) {
   game.start({ level, seed });
+  rig.reset();
+  audio.clearLog();
+  towerView.clear(); projectileView.clear(); fx.clear();
+  hud.closeMenu();
+  placement.reset();
   handleEvents();
   ui.sync();
 }
@@ -48,13 +62,51 @@ function start(level, seed) {
 const ui = createUI(root, game, {
   play: () => start(1, 1),
   retry: () => start(game.levelId || 1, game.seed || 1),
-  menu: () => { game.toMenu(); enemyView.clear(); },
+  menu: () => { game.toMenu(); clearActors(); },
+});
+
+function clearActors() {
+  enemyView.clear(); towerView.clear(); projectileView.clear(); fx.clear();
+}
+
+const BUILD_TYPE = 'harpoon';
+function buildSelected() {
+  const hex = hud.menuHex() || placement.hover();
+  if (!hex || (game.screen !== 'playing' && game.screen !== 'paused')) return;
+  const res = game.build(BUILD_TYPE, hex.q, hex.r);
+  if (res.ok) { hud.closeMenu(); placement.setSelected(null); } else placement.refuseFlash(hex, anim);
+  handleEvents();
+}
+const hud = createHud(ui.root, ui.hudRow, game, {
+  nextWave: () => { if (game.callNextWave() >= 0) handleEvents(); },
+  buildSelected,
+});
+const placement = createPlacement({
+  scene: stage.scene, camera: stage.camera, dom: stage.renderer.domElement, game,
+  onPick(hex) {
+    const blocker = game.buildBlocker(BUILD_TYPE, hex.q, hex.r);
+    if (blocker && blocker !== 'salvage') {
+      hud.closeMenu(); placement.setSelected(null);
+      game.build(BUILD_TYPE, hex.q, hex.r); // pushes the refuse event
+      placement.refuseFlash(hex, anim);
+      handleEvents();
+      return;
+    }
+    hud.openMenu(hex); placement.setSelected(hex);
+    audio.unlock(); audio.play('ui_click', game.time);
+  },
+  onCancel() { hud.closeMenu(); placement.setSelected(null); },
 });
 
 function handleEvents() {
   for (const ev of game.drainEvents()) {
     switch (ev.type) {
-      case 'levelStart': enemyView.clear(); flickerAt = -100; showWorld(); break;
+      case 'levelStart': clearActors(); flickerAt = -100; showWorld(); break;
+      case 'build': audio.play('build', game.time); break;
+      case 'refuse': audio.play('refuse', game.time); break;
+      case 'fire': audio.play('harpoon_fire', game.time); towerView.onFire(ev.towerId, anim); break;
+      case 'hit': audio.play('enemy_hit', game.time); fx.hit(ev.x, ev.z); break;
+      case 'kill': audio.play('enemy_death', game.time); fx.kill(ev.x, ev.z); break;
       case 'leak': audio.play('lighthouse_hit', game.time); ui.pulse(); flickerAt = anim; break;
       case 'waveStart': audio.play('wave_start', game.time); break;
       case 'waveCleared': audio.play('wave_clear', game.time); break;
@@ -73,6 +125,7 @@ function runTicks(n) {
   }
 }
 
+const v3 = new THREE.Vector3();
 let fpsSmooth = 60;
 const ctl = {
   game, rig, camera: stage.camera, canvas: stage.renderer.domElement,
@@ -85,13 +138,31 @@ const ctl = {
     if (game.screen === 'playing') game.screen = 'paused';
     handleEvents();
     ui.sync();
+    hud.sync();
     render();
+  },
+  build: (type, q, r) => { const res = game.build(type, q, r); handleEvents(); return res; },
+  callNextWave: () => { const b = game.callNextWave(); handleEvents(); return b; },
+  toScreen(x, y, z) {
+    v3.set(x, y, z).project(stage.camera);
+    const rect = stage.renderer.domElement.getBoundingClientRect();
+    return { x: Math.round(rect.left + ((v3.x + 1) / 2) * rect.width), y: Math.round(rect.top + ((1 - v3.y) / 2) * rect.height) };
   },
 };
 
 function render() {
   showWorld();
   enemyView.update(game, anim);
+  towerView.update(game, anim);
+  projectileView.update(game);
+  fx.update(anim);
+  placement.update(anim, BUILD_TYPE);
+  const sel = hud.menuHex();
+  if (sel) {
+    const tile = game.level.tileMap.get(`${sel.q},${sel.r}`);
+    const p = ctl.toScreen(tile.x, tile.height, tile.z);
+    hud.reposition(p);
+  }
   world.lighthouse.update(anim, anim - flickerAt);
   stage.renderer.render(stage.scene, stage.camera);
 }
@@ -114,6 +185,7 @@ function frame(now) {
   handleEvents();
   rig.update(dt);
   ui.sync();
+  hud.sync();
   render();
   requestAnimationFrame(frame);
 }
@@ -123,6 +195,11 @@ window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (e.code === 'KeyM' && !e.repeat) audio.toggleMute();
   if (e.code === 'Enter' && game.screen === 'menu') start(1, 1);
+  if (game.screen === 'playing' && !e.repeat) {
+    if (e.code === 'Space') { e.preventDefault(); if (game.callNextWave() >= 0) handleEvents(); }
+    else if (e.code === 'Digit1') buildSelected();
+    else if (e.code === 'Escape') { hud.closeMenu(); placement.setSelected(null); }
+  }
 });
 
 installTestApi(ctl);

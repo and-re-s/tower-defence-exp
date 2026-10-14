@@ -20,9 +20,16 @@ export const LEVELS = {
     startLight: 20,
     startSalvage: 150,
     // Breather before the first wave, then per-wave groups of enemies spawned `interval` s apart.
-    firstBreather: 6,
-    breather: 8,
-    waves: [5, 7, 9, 11, 13, 15].map((count) => ({ groups: [{ type: 'scuttler', count, interval: 1.2 }] })),
+    firstBreather: 20,
+    breather: 12,
+    // [scuttlers, skitterers, hp scale] per wave
+    waves: [[8, 0, 1], [10, 6, 1.2], [12, 10, 1.5], [14, 14, 1.9], [16, 18, 2.4], [18, 24, 3]].map(([scuttlers, skitterers, hpScale]) => ({
+      hpScale,
+      groups: [
+        { type: 'scuttler', count: scuttlers, interval: 1.3 },
+        ...(skitterers ? [{ type: 'skitterer', count: skitterers, interval: 0.55 }] : []),
+      ],
+    })),
   },
 };
 

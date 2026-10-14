@@ -41,7 +41,7 @@ test('enemies advance along the path and stay on it', () => {
   g.start({ level: 1, seed: 1 });
   let last = new Map();
   let seen = 0;
-  for (let i = 0; i < 60 * 20; i++) {
+  for (let i = 0; i < 60 * 40; i++) {
     g.tick();
     for (const e of g.enemies) {
       assert.ok(e.s >= (last.get(e.id) ?? 0));

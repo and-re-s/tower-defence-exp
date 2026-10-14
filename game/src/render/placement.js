@@ -1,0 +1,113 @@
+import * as THREE from 'three';
+import { PAL } from './palette.js';
+import { hexKey, worldToHex, SQRT3 } from '../sim/hex.js';
+import { towerRange } from '../sim/towers.js';
+
+/**
+ * Hex picking, the hover outline and the range ring. Pure view code: it asks the game whether a hex is
+ * buildable and tells the UI what was clicked.
+ */
+export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) {
+  const ray = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const hit = new THREE.Vector3();
+
+  const outlineGeo = new THREE.RingGeometry(0.8, 0.95, 6);
+  outlineGeo.rotateX(-Math.PI / 2);
+  const ringGeo = new THREE.RingGeometry(0.965, 1, 64);
+  ringGeo.rotateX(-Math.PI / 2);
+  const discGeo = new THREE.CircleGeometry(1, 48);
+  discGeo.rotateX(-Math.PI / 2);
+  const mk = (color, opacity) => new THREE.MeshBasicMaterial({
+    color, transparent: true, opacity, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
+  });
+  const mats = { amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.8), disc: mk(PAL.amber, 0.09) };
+  const outline = new THREE.Mesh(outlineGeo, mats.amber);
+  const ring = new THREE.Mesh(ringGeo, mats.ring);
+  const disc = new THREE.Mesh(discGeo, mats.disc);
+  const selOutline = new THREE.Mesh(outlineGeo, mats.amber);
+  for (const o of [outline, ring, disc, selOutline]) { o.renderOrder = 10; o.visible = false; scene.add(o); }
+
+  let hover = null; // {q, r} under the pointer
+  let selected = null; // hex with the build menu open
+  let flash = -10;
+  let flashAt = null;
+  let pointerIn = false;
+
+  function pick(clientX, clientY) {
+    const rect = dom.getBoundingClientRect();
+    ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    // Intersect with the plane at the height of the tile found so far; two rounds settle on tall tiles.
+    let h = 0.25;
+    let res = null;
+    for (let i = 0; i < 3; i++) {
+      plane.constant = -h;
+      if (!ray.ray.intersectPlane(plane, hit)) return null;
+      res = worldToHex(hit.x, hit.z);
+      const tile = game.level && game.level.tileMap.get(hexKey(res.q, res.r));
+      if (!tile) return null;
+      h = tile.height;
+    }
+    return res;
+  }
+
+  dom.addEventListener('pointermove', (e) => { pointerIn = true; hover = pick(e.clientX, e.clientY); });
+  dom.addEventListener('pointerleave', () => { pointerIn = false; hover = null; });
+  dom.addEventListener('pointerdown', (e) => {
+    if (e.button === 2) { onCancel(); return; }
+    if (e.button !== 0 || (game.screen !== 'playing' && game.screen !== 'paused')) return;
+    const hex = pick(e.clientX, e.clientY);
+    if (hex) onPick(hex);
+    else onCancel();
+  });
+  dom.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  function place(hex, type, time, kind) {
+    const tile = game.level.tileMap.get(hexKey(hex.q, hex.r));
+    const y = tile.height + 0.05;
+    const pulse = 0.5 + 0.5 * Math.sin(time * 5);
+    outline.position.set(tile.x, y, tile.z);
+    outline.scale.setScalar(1 + (kind === 'ok' ? 0.02 * pulse : 0));
+    if (kind === 'ok') {
+      const r = hexRange(type, tile) * SQRT3;
+      for (const o of [ring, disc]) { o.position.set(tile.x, y, tile.z); o.scale.set(r, 1, r); o.visible = true; }
+      ring.scale.set(r, 1, r);
+    }
+  }
+  const hexRange = (type, tile) => towerRange(type, tile.terrain);
+
+  return {
+    /** Hex currently open in the build menu (or null). */
+    setSelected(hex) { selected = hex; },
+    refuseFlash(hex, time) { flashAt = hex; flash = time; },
+    reset() { selected = null; flashAt = null; },
+    hover: () => hover,
+    update(time, type = 'harpoon') {
+      outline.visible = ring.visible = disc.visible = selOutline.visible = false;
+      if ((game.screen !== 'playing' && game.screen !== 'paused') || !game.level) return;
+      const active = selected || (pointerIn ? hover : null);
+      if (active) {
+        const blocker = game.buildBlocker(type, active.q, active.r);
+        const ok = !blocker || blocker === 'salvage';
+        outline.material = ok ? mats.amber : mats.coral;
+        outline.visible = true;
+        place(active, type, time, ok ? 'ok' : 'no');
+      }
+      if (flashAt && time - flash < 0.4) {
+        const tile = game.level.tileMap.get(hexKey(flashAt.q, flashAt.r));
+        selOutline.material = mats.coral;
+        selOutline.position.set(tile.x, tile.height + 0.07, tile.z);
+        selOutline.scale.setScalar(1 + 0.12 * Math.sin(((time - flash) / 0.4) * Math.PI));
+        selOutline.visible = true;
+        outline.material = mats.coral;
+      }
+    },
+    dispose() {
+      for (const o of [outline, ring, disc, selOutline]) scene.remove(o);
+      outlineGeo.dispose(); ringGeo.dispose(); discGeo.dispose();
+      Object.values(mats).forEach((m) => m.dispose());
+    },
+  };
+}
