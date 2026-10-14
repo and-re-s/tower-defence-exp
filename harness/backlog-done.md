@@ -18,3 +18,6 @@ One line per item.
 - B-009 · M1 · M — Select a tower: upgrade, sell, targeting — done round-07 (75c22ff)
 - B-010 · M1 · M — Tide Bell and the Shellback — done round-08 (5034bc7)
 - B-043 · M0 · S — Round 07 minor bugs bundle — done round-08 (5034bc7)
+- B-044 · M0 · S — Round 08 minor bugs bundle — done round-09 (944b19d)
+- B-011 · M1 · M — Lantern and the Mistwalker — done round-09 (944b19d)
+- B-012 · M1 · S — Next-wave preview and calling waves early — done round-09 (944b19d)

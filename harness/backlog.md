@@ -7,35 +7,18 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-044 · fix · review · S — Round 08 minor bugs bundle
-Found: round-08 (minor)
+### B-045 · fix · todo · S — Round 09 minor bugs bundle
+Found: round-09 (minor)
 Repro/Done when:
-- at 640x420 and 800x500 the "Next wave" button is half hidden behind the tower bar (800x500: button y 403-436, bar y 416-492; round-08/small-start.jpg, 800x500.jpg); keep it fully visible and clickable above the bar at every viewport from 640x420 up (compare `getBoundingClientRect()` of `#next-wave` and `#tower-bar`: no overlap);
-- at 640x420 the open build menu still covers the lighthouse and most of the island (small-menu2.jpg); show the menu beside the clicked hex or as a compact row so the hex and the lighthouse stay visible;
-- the Tide Bell range preview still uses the amber "buildable" ring; give it a teal tint so it does not read as a build cue.
+- at 400x700 (portrait) the island is not visible at all, only the lighthouse as a dot (round-09/portrait-400.jpg), and the tower bar is clipped (rect left -41, right 441 in a 400 px viewport); the camera fit must keep the whole island on screen and the bar inside the viewport at 400x700 and 500x350;
+- at 500x350 and 640x420 the island is rendered visibly darker/desaturated than at 1280x720 (vp-500.jpg, menu-640.jpg vs 02-start.jpg); same lighting and fog at every viewport size;
+- a cloaked Mistwalker outside lantern light is almost impossible to see (cloak-vs-revealed.jpg, left): add a clearly visible but faint cue (soft shimmer ring or ripple on the ground) so the player can tell something is coming without being able to target it.
 
 ---
 
 ## M1 — full core
 
 
-
-### B-011 · M1 · review · M — Lantern and the Mistwalker
-Why: pillar "Hold the light": light as a weapon and visibility as a mechanic.
-Behavior: The Lantern (cost 60) is a glass-topped tower glowing amber that lights the hexes around it (radius 3) with a warm pool of light, burns enemies inside it (4 dps), and marks them to take +15% damage from all sources. The Mistwalker (a translucent floating jellyfish) is cloaked: towers can't target it unless it is inside a Lantern's light; while cloaked it is drawn as a faint shimmer.
-Done when:
-- `state().enemies` shows a `cloaked`/`revealed` flag; no tower targets a Mistwalker outside lantern light; inside it, they do;
-- an enemy inside lantern light loses hp over time without any other tower and takes 15% more damage from a harpoon hit;
-- the lantern's light pool is visible on the ground in a screenshot, and a cloaked Mistwalker looks clearly different from a revealed one;
-- the tower bar shows four towers with hotkeys 1–4.
-
-### B-012 · M1 · review · S — Next-wave preview and calling waves early
-Why: informed decisions between waves; rewards confident players.
-Behavior: During the breather the HUD shows the next wave as small enemy icons with counts, and its spawn beach pulses on the map. "Next wave +N" calls it early; the bonus shrinks as the breather runs out.
-Done when:
-- `state()` exposes the next wave's composition and it matches what spawns;
-- calling a wave early grants more salvage the earlier it is called (two calls at different times give different bonuses); the bonus shows as a floating "+N" near the salvage counter;
-- the spawn beach of the next wave visibly pulses in a screenshot during the breather.
 
 ### B-013 · M1 · todo · S — Pause menu, game speed and hotkeys
 Why: control and comfort; needed for every later level.
