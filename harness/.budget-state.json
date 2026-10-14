@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "phase": "running",
+  "phase": "finishing",
   "started_at": 1791478384048,
   "sessions": {
     "6d0874f2-a3d9-5db0-847e-590c640bd4de": {
@@ -19,28 +19,30 @@
       "updated": "2026-10-08T16:55:49.432Z"
     },
     "57a2d635-c573-5381-b358-bd4a3595d9c7": {
-      "usd": 11.293836799999992,
+      "usd": 12.454975500000002,
       "by_agent": {
-        "orchestrator": 0.9481,
-        "evaluator": 7.0073,
-        "generator": 3.3384
+        "orchestrator": 1.0752,
+        "evaluator": 7.6354,
+        "generator": 3.7444
       },
       "by_model": {
-        "claude-sonnet-5-5": 11.2938
+        "claude-sonnet-5-5": 12.455
       },
       "main_model": "claude-sonnet-5-5",
       "unknown_models": [],
       "background_capped": false,
-      "updated": "2026-10-14T16:01:31.411Z"
+      "updated": "2026-10-14T16:35:01.225Z"
     }
   },
-  "checkpoints_done": [],
+  "checkpoints_done": [
+    12
+  ],
   "current_round": 11,
-  "last_scored_round": 10,
+  "last_scored_round": 11,
   "last_replan_round": 1,
   "spec_versions": 1,
   "stalls": 0,
-  "updated": "2026-10-14T16:01:31.416Z",
+  "updated": "2026-10-14T16:35:02.429Z",
   "armed_at": 1791978438223,
   "start_id": "start-mv81p07j",
   "session_from": {
