@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
 
-const MAX = 120;
+const MAX = 200;
 const GRAVITY = 6;
 
 /** Small pooled particle bursts. Everything advances on the animation (game) clock. */
@@ -10,6 +10,8 @@ export function createFx(scene) {
   const mats = {
     hit: new THREE.MeshBasicMaterial({ color: PAL.whitewash, transparent: true, depthWrite: false }),
     glow: new THREE.MeshBasicMaterial({ color: PAL.brine, transparent: true, depthWrite: false }),
+    smoke: new THREE.MeshBasicMaterial({ color: 0xcfc6b2, transparent: true, opacity: 0.55, depthWrite: false }),
+    fire: new THREE.MeshBasicMaterial({ color: PAL.amber, transparent: true, depthWrite: false }),
   };
   const parts = [];
   const free = [];
@@ -36,6 +38,12 @@ export function createFx(scene) {
 
   return {
     hit(x, z) { burst('hit', x, 0.45, z, 4, 1.4, 0.7, Math.floor(x * 13)); },
+    /** One smoke puff, used for shell trails and muzzle clouds. */
+    smoke(x, y, z, size = 1.4) { spawn('smoke', x, y, z, 0, 0.25, 0, 0.7, size); },
+    explosion(x, z, radius) {
+      burst('fire', x, 0.5, z, 10, radius * 1.4, 1.6, Math.floor(x * 7));
+      burst('smoke', x, 0.4, z, 8, radius * 0.9, 2.6, Math.floor(z * 5));
+    },
     kill(x, z) { burst('glow', x, 0.4, z, 12, 2.1, 1, Math.floor(z * 11)); },
     update(time) {
       const dt = Math.max(0, Math.min(0.5, time - lastTime));

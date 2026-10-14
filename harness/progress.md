@@ -31,3 +31,11 @@ Decisions: most B-007 ids already existed from round 2; this round was the quali
 Known issues: sounds cannot be listened to in the cloud, only logged; cannon/bell/upgrade/sell sounds wait for their items; music and separate volumes are B-030/B-031.
 Tried and reverted: nothing.
 How to test: `start({level:1,seed:1})`, click a button then read `state().audio.running` (true) and `audioLog()` ids (ui_click, build, harpoon_fire, enemy_hit, enemy_death, wave_start, wave_clear, lighthouse_hit, victory, defeat via win()/lose()); press M, `state().muted`, reload keeps it. Pause, `#next-wave` is disabled. `skipToWave(0)`/`(7)` return false. npm test has the new tuning test.
+
+## Round 05
+Items: B-040 -> review, B-008 -> review (B-009 left for next round)
+Changes: second tower, Cliff Cannon (90): squat slate barrel on a basalt base, lobs an arcing shell with a smoke trail, muzzle puff, explosion burst in a 1.2-hex blast, own fire/boom sounds. Min range 1.5 hexes, +1 range on rock (4 / 5). Bottom tower bar with icons, costs, hotkeys 1-2; the build menu lists both towers; Next wave button moved above the bar. B-040: Space ignored while paused, timeScale resets to 1 on start.
+Decisions: shells are aimed at the enemy's predicted path position (not homing) so a cluster gets hit; shells are not counted as "incoming" damage so harpoons keep firing. Cannon stats: 24 dmg, 0.5/s, shell speed 7. The bar click only arms the type (range-ring preview); building still needs a hex.
+Known issues: level 1 tuning untouched (cannons make it easier; the bot tests only use harpoons); no cannon-specific balance test; salvage sink improves but upgrades (B-009) still missing.
+Tried and reverted: nothing.
+How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('cannon', q, r)` (rock tile = range 5 in `state().towers`), `callNextWave()`, `step(n)` until `projectiles` has kind `shell`; `audioLog()` shows `cannon_fire`, `cannon_boom`. Click a hex then press 2 or click the cannon option. npm test has cluster/min-range/rock-range tests.

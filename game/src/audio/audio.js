@@ -161,6 +161,19 @@ const SOUNDS = {
     tone(140 * k, 0.14, { type: 'sine', vol: 0.16, delay: 0.05, slideTo: 70 }); // thunk
     noise(0.05, { freq: 500, vol: 0.1, delay: 0.05 });
   },
+  cannon_fire() {
+    const k = vary();
+    tone(70 * k, 0.28, { type: 'sine', vol: 0.34, slideTo: 38 }); // deep thump
+    noise(0.22, { freq: 900, vol: 0.2, kind: 'lowpass' }); // powder puff
+    tone(300 * k, 0.12, { type: 'sawtooth', vol: 0.05, slideTo: 90, delay: 0.02 });
+    noise(0.5, { freq: 700, vol: 0.06, kind: 'lowpass', delay: 0.15 }); // shell whistle-ish rush
+  },
+  cannon_boom() {
+    const k = vary();
+    tone(85 * k, 0.4, { type: 'sine', vol: 0.34, slideTo: 32 });
+    noise(0.45, { freq: 1200, vol: 0.28, kind: 'lowpass' });
+    noise(0.3, { freq: 3500, kind: 'highpass', vol: 0.08, delay: 0.05 }); // spray and rubble
+  },
   enemy_hit() {
     const k = vary();
     noise(0.04, { freq: 2600 * k, q: 3, kind: 'bandpass', vol: 0.12 }); // wet click

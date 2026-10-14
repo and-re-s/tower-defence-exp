@@ -28,8 +28,9 @@ const stage = createStage(root);
 const rig = createCameraRig(stage.camera, stage.renderer.domElement);
 const enemyView = createEnemyView(stage.scene);
 const towerView = createTowerView(stage.scene);
-const projectileView = createProjectileView(stage.scene);
 const fx = createFx(stage.scene);
+const projectileView = createProjectileView(stage.scene, fx);
+
 const previewLevel = buildLevel(1);
 
 let world = null; // { key, island, lighthouse }
@@ -69,25 +70,29 @@ function clearActors() {
   enemyView.clear(); towerView.clear(); projectileView.clear(); fx.clear();
 }
 
-const BUILD_TYPE = 'harpoon';
-function buildSelected() {
+let armed = 'harpoon'; // tower type shown by the range preview
+function arm(type) { armed = type; hud.setArmed(type); audio.unlock(); audio.play('ui_click', game.time); }
+function buildSelected(type = armed) {
+  armed = type; hud.setArmed(type);
   const hex = hud.menuHex() || placement.hover();
   if (!hex || (game.screen !== 'playing' && game.screen !== 'paused')) return;
-  const res = game.build(BUILD_TYPE, hex.q, hex.r);
+  const res = game.build(type, hex.q, hex.r);
   if (res.ok) { hud.closeMenu(); placement.setSelected(null); } else placement.refuseFlash(hex, anim);
   handleEvents();
 }
 const hud = createHud(ui.root, ui.hudRow, game, {
   nextWave: () => { if (game.callNextWave() >= 0) handleEvents(); },
   buildSelected,
+  arm,
 });
+hud.setArmed(armed);
 const placement = createPlacement({
   scene: stage.scene, camera: stage.camera, dom: stage.renderer.domElement, game,
   onPick(hex) {
-    const blocker = game.buildBlocker(BUILD_TYPE, hex.q, hex.r);
+    const blocker = game.buildBlocker(armed, hex.q, hex.r);
     if (blocker && blocker !== 'salvage') {
       hud.closeMenu(); placement.setSelected(null);
-      game.build(BUILD_TYPE, hex.q, hex.r); // pushes the refuse event
+      game.build(armed, hex.q, hex.r); // pushes the refuse event
       placement.refuseFlash(hex, anim);
       handleEvents();
       return;
@@ -98,14 +103,23 @@ const placement = createPlacement({
   onCancel() { hud.closeMenu(); placement.setSelected(null); },
 });
 
+function muzzleSmoke(towerId) {
+  const t = game.towers.find((tw) => tw.id === towerId);
+  if (!t) return;
+  const dx = Math.sin(t.angle) * 0.6;
+  const dz = Math.cos(t.angle) * 0.6;
+  for (let i = 0; i < 4; i++) fx.smoke(t.x + dx * (1 + i * 0.4), t.y + 1.7 + i * 0.1, t.z + dz * (1 + i * 0.4), 1.6 - i * 0.2);
+}
+
 function handleEvents() {
   for (const ev of game.drainEvents()) {
     switch (ev.type) {
       case 'levelStart': clearActors(); flickerAt = -100; showWorld(); break;
       case 'build': audio.play('build', game.time); break;
       case 'refuse': audio.play('refuse', game.time); break;
-      case 'fire': audio.play('harpoon_fire', game.time); towerView.onFire(ev.towerId, anim); break;
+      case 'fire': audio.play(ev.towerType === 'cannon' ? 'cannon_fire' : 'harpoon_fire', game.time); towerView.onFire(ev.towerId, anim); if (ev.towerType === 'cannon') muzzleSmoke(ev.towerId); break;
       case 'hit': audio.play('enemy_hit', game.time); fx.hit(ev.x, ev.z); break;
+      case 'explode': audio.play('cannon_boom', game.time); fx.explosion(ev.x, ev.z, ev.radius); break;
       case 'kill': audio.play('enemy_death', game.time); fx.kill(ev.x, ev.z); break;
       case 'leak': audio.play('lighthouse_hit', game.time); ui.pulse(); flickerAt = anim; break;
       case 'waveStart': audio.play('wave_start', game.time); break;
@@ -157,7 +171,7 @@ function render() {
   towerView.update(game, anim);
   projectileView.update(game);
   fx.update(anim);
-  placement.update(anim, BUILD_TYPE);
+  placement.update(anim, armed);
   const sel = hud.menuHex();
   if (sel) {
     const tile = game.level.tileMap.get(`${sel.q},${sel.r}`);
@@ -197,8 +211,9 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) audio.toggleMute();
   if (e.code === 'Enter' && game.screen === 'menu') start(1, 1);
   if ((game.screen === 'playing' || game.screen === 'paused') && !e.repeat) {
-    if (e.code === 'Space') { e.preventDefault(); if (game.callNextWave() >= 0) handleEvents(); }
-    else if (e.code === 'Digit1') buildSelected();
+    if (e.code === 'Space') { e.preventDefault(); if (game.screen === 'playing' && game.callNextWave() >= 0) handleEvents(); }
+    else if (e.code === 'Digit1') buildSelected('harpoon');
+    else if (e.code === 'Digit2') buildSelected('cannon');
     else if (e.code === 'Escape') { hud.closeMenu(); placement.setSelected(null); }
   }
 });

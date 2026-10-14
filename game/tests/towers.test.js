@@ -175,3 +175,75 @@ test('same seed and same calls give an identical state, including helpers', () =
   };
   assert.equal(run(), run());
 });
+
+// --- B-008: Cliff Cannon ---
+import { pointOnPath } from '../src/sim/levels.js';
+
+test('cannon splash hits several clustered enemies on the same tick and never fires inside min range', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  const spot = rankSpots(g).find((s) => s.t.terrain === 'sand').t;
+  assert.ok(g.build('cannon', spot.q, spot.r).ok);
+  // Put three crabs in a tight cluster at a comfortable distance along the path.
+  const pts = g.level.pathPoints;
+  let s0 = 0;
+  for (let s = 2; s < g.level.pathLength; s += 0.2) {
+    const p = pointOnPath(g.level, s, {});
+    const d = Math.hypot(p.x - spot.x, p.z - spot.z) / SQRT3;
+    if (d > 2.5 && d < 3.5) { s0 = s; break; }
+  }
+  assert.ok(s0 > 0 && pts.length);
+  for (let i = 0; i < 3; i++) {
+    g.spawnEnemy('scuttler');
+    const e = g.enemies[i];
+    e.s = s0 + i * 0.25;
+    pointOnPath(g.level, e.s, e);
+  }
+  g.phase = 'wave'; g.spawnQueue = [{ type: 'scuttler', gap: 99 }]; g.spawnTimer = 99;
+  const before = g.enemies.map((e) => e.hp);
+  let multi = false;
+  for (let i = 0; i < 60 * 8 && !multi; i++) {
+    const hp0 = g.enemies.map((e) => e.hp);
+    g.tick();
+    const dropped = g.enemies.filter((e, k) => e.hp < hp0[k]).length;
+    if (dropped >= 2) multi = true;
+    for (const tw of g.towers) {
+      const t = g.enemies.find((e) => e.id === tw.targetId);
+      if (t) assert.ok(Math.hypot(t.x - tw.x, t.z - tw.z) >= 1.5 * SQRT3 - 1e-6, 'targeted inside min range');
+    }
+  }
+  assert.ok(multi, `no multi-hit; hp ${before} -> ${g.enemies.map((e) => e.hp)}`);
+});
+
+test('cannon never targets enemies closer than 1.5 hexes and range is +1 on rock', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  const spot = rankSpots(g)[0].t;
+  g.build('cannon', spot.q, spot.r);
+  g.spawnEnemy('scuttler');
+  const e = g.enemies[0];
+  // Find a path position well inside the minimum range and hold the crab there.
+  let sClose = -1;
+  for (let s = 0; s < g.level.pathLength; s += 0.05) {
+    const p = pointOnPath(g.level, s, {});
+    if (Math.hypot(p.x - spot.x, p.z - spot.z) < 1.2 * SQRT3) { sClose = s; break; }
+  }
+  assert.ok(sClose >= 0);
+  for (let i = 0; i < 30; i++) { e.s = sClose; g.tick(); e.s = sClose; }
+  assert.equal(g.towers[0].targetId, 0);
+  assert.equal(g.projectiles.length, 0);
+  const sand = g.level.tiles.find((t) => t.terrain === 'sand' && !g.towerAt.has(`${t.q},${t.r}`));
+  const rock = g.level.tiles.find((t) => t.terrain === 'rock' && !g.towerAt.has(`${t.q},${t.r}`));
+  g.build('cannon', sand.q, sand.r); g.build('cannon', rock.q, rock.r);
+  const snap = g.snapshot().towers;
+  assert.equal(snap.find((t) => t.terrain === 'rock').range - snap.find((t) => t.terrain === 'sand').range, 1);
+});
+
+test('time scale resets on start and Space-like wave call is a sim-level concern only', () => {
+  const g = new Game();
+  g.timeScale = 16;
+  g.start({ level: 1, seed: 1 });
+  assert.equal(g.snapshot().timeScale, 1);
+});

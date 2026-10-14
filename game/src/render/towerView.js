@@ -6,6 +6,9 @@ const RECOIL_TIME = 0.35;
 const TURN_RATE = 9;
 const TOWER_SCALE = 1.5;
 export const MUZZLE_HEIGHT = 1.62 * TOWER_SCALE;
+const CANNON_SCALE = 1.9;
+export const CANNON_MUZZLE_HEIGHT = 1.0 * CANNON_SCALE;
+export const muzzleHeight = (type) => (type === 'cannon' ? CANNON_MUZZLE_HEIGHT : MUZZLE_HEIGHT);
 const easeOutBack = (t) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
 
 function makeKit() {
@@ -16,6 +19,8 @@ function makeKit() {
     stone: new THREE.MeshStandardMaterial({ color: PAL.basalt, flatShading: true, roughness: 0.9 }),
     rope: new THREE.MeshStandardMaterial({ color: PAL.sand, flatShading: true, roughness: 1 }),
     iron: new THREE.MeshStandardMaterial({ color: PAL.whitewash, flatShading: true, roughness: 0.5 }),
+    cannon: new THREE.MeshStandardMaterial({ color: 0x56607a, flatShading: true, roughness: 0.55, metalness: 0.35 }),
+    bore: new THREE.MeshBasicMaterial({ color: 0x07080c }),
     dust: new THREE.MeshBasicMaterial({ color: PAL.sand, transparent: true, depthWrite: false, opacity: 0 }),
   };
   const geos = {
@@ -31,7 +36,19 @@ function makeKit() {
     flag: new THREE.BoxGeometry(0.02, 0.2, 0.34),
     pole: new THREE.CylinderGeometry(0.018, 0.018, 0.6, 4),
     dust: new THREE.RingGeometry(0.55, 0.8, 18),
+    base: new THREE.CylinderGeometry(0.5, 0.58, 0.42, 6),
+    drum: new THREE.CylinderGeometry(0.36, 0.42, 0.2, 8),
+    barrel: new THREE.CylinderGeometry(0.2, 0.27, 0.95, 8),
+    band: new THREE.CylinderGeometry(0.285, 0.285, 0.07, 8),
+    muzzle: new THREE.CylinderGeometry(0.3, 0.22, 0.2, 8),
+    bore: new THREE.CylinderGeometry(0.13, 0.13, 0.04, 8),
+    ball: new THREE.SphereGeometry(0.1, 6, 5),
+    trunnion: new THREE.BoxGeometry(0.7, 0.14, 0.14),
   };
+  geos.barrel.rotateX(Math.PI / 2);
+  geos.band.rotateX(Math.PI / 2);
+  geos.muzzle.rotateX(Math.PI / 2);
+  geos.bore.rotateX(Math.PI / 2);
   geos.bolt.rotateX(Math.PI / 2);
   geos.tip.rotateX(Math.PI / 2);
   geos.dust.rotateX(-Math.PI / 2);
@@ -82,6 +99,43 @@ function buildHarpoonPost(kit) {
   return { root, body, head, recoil, bolt, dust };
 }
 
+function buildCliffCannon(kit) {
+  const { mats: m, geos: g } = kit;
+  const root = new THREE.Group();
+  root.scale.setScalar(CANNON_SCALE);
+  const body = new THREE.Group();
+  root.add(body);
+  const add = (parent, geo, mat, x, y, z) => {
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  add(body, g.base, m.stone, 0, 0.21, 0);
+  add(body, g.drum, m.cannon, 0, 0.52, 0);
+  for (const [x, z] of [[0.4, 0.15], [0.32, 0.3], [-0.42, -0.1]]) add(body, g.ball, m.cannon, x, 0.47, z);
+  const head = new THREE.Group();
+  head.position.y = 0.72;
+  body.add(head);
+  add(head, g.trunnion, m.woodDark, 0, 0, 0);
+  const pitch = new THREE.Group();
+  pitch.rotation.x = -0.62; // barrel tilted up
+  head.add(pitch);
+  const recoil = new THREE.Group();
+  pitch.add(recoil);
+  add(recoil, g.barrel, m.cannon, 0, 0, 0.3);
+  add(recoil, g.band, m.flag, 0, 0, 0.05);
+  add(recoil, g.muzzle, m.cannon, 0, 0, 0.8);
+  add(recoil, g.bore, m.bore, 0, 0, 0.91);
+  const dust = new THREE.Mesh(g.dust, m.dust.clone());
+  dust.position.y = 0.06;
+  dust.visible = false;
+  root.add(dust);
+  return { root, body, head, recoil, bolt: new THREE.Object3D(), dust };
+}
+
 /** One model per tower; the build bounce, the turning and the recoil run on the game clock. */
 export function createTowerView(scene) {
   const kit = makeKit();
@@ -100,7 +154,7 @@ export function createTowerView(scene) {
         alive.add(t.id);
         let v = views.get(t.id);
         if (!v) {
-          v = { m: buildHarpoonPost(kit), yaw: t.angle };
+          v = { m: (t.type === 'cannon' ? buildCliffCannon : buildHarpoonPost)(kit), yaw: t.angle };
           v.m.root.position.set(t.x, t.y, t.z);
           scene.add(v.m.root);
           views.set(t.id, v);
@@ -125,7 +179,7 @@ export function createTowerView(scene) {
         v.m.head.rotation.y = v.yaw;
         const since = time - (fireAt.get(t.id) ?? -10);
         const r = since < RECOIL_TIME ? Math.sin((since / RECOIL_TIME) * Math.PI) : 0;
-        v.m.recoil.position.z = -0.12 * r * (1 - since / RECOIL_TIME);
+        v.m.recoil.position.z = (t.type === 'cannon' ? -0.22 : -0.12) * r * (1 - since / RECOIL_TIME);
         v.m.bolt.visible = since > 0.3 || since < 0;
       }
       for (const [id, v] of views) {
@@ -142,6 +196,6 @@ export function createTowerView(scene) {
       fireAt.clear();
     },
     /** Top of the tower in world coordinates (for anchoring UI). */
-    heightOf: () => MUZZLE_HEIGHT + 0.3,
+    heightOf: (type) => muzzleHeight(type) + 0.3,
   };
 }

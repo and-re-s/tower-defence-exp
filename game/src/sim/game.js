@@ -32,6 +32,7 @@ export class Game {
     this.level = buildLevel(level);
     this.levelId = level;
     this.seed = seed;
+    this.timeScale = 1;
     this.rng = createRng(seed);
     this.time = 0;
     this.enemies = [];
@@ -291,7 +292,7 @@ export class Game {
         id: t.id, type: t.type, q: t.q, r: t.r, tier: t.tier, range: t.range, terrain: t.terrain, targetId: t.targetId,
         angleDeg: round((t.angle * 180) / Math.PI, 1),
       })),
-      projectiles: this.projectiles.map((p) => ({ id: p.id, towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
+      projectiles: this.projectiles.map((p) => ({ id: p.id, kind: p.kind || 'bolt', towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
       enemies: this.enemies.map((e) => ({
         id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
       })),

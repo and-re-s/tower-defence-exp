@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-040 · fix · todo · S — Round 04 minor bugs bundle
+### B-040 · fix · review · S — Round 04 minor bugs bundle
 Found: round-04 (minor)
 Repro/Done when:
 - with `start({level:1,seed:1}); pause();` the "Next wave" button is disabled but Space still calls the wave (wave 0 -> 1, phase `wave`) while paused; make both consistent (Space also ignored while paused, or button enabled);
@@ -20,7 +20,7 @@ Repro/Done when:
 ## M1 — full core
 
 
-### B-008 · M1 · todo · M — Cliff Cannon and the high-ground rule
+### B-008 · M1 · review · M — Cliff Cannon and the high-ground rule
 Why: pillar "The island is the board"; the first real tower choice (single target vs splash).
 Behavior: A second tower, the Cliff Cannon (cost 90): a squat basalt tower with a barrel that lobs an arcing shell with a smoke trail; it explodes in a 1.2-hex blast damaging every ground enemy inside. It can't hit enemies closer than 1.5 hexes. Every tower on a rock tile gets +1 hex range. A tower bar at the bottom shows both towers with icons, costs and hotkeys 1–2.
 Done when:

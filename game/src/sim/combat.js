@@ -1,5 +1,8 @@
 import { TICK } from './clock.js';
 import { hexesToWorld, TOWER_TYPES } from './towers.js';
+import { pointOnPath } from './levels.js';
+import { ENEMY_TYPES } from './enemies.js';
+import { SQRT3 } from './hex.js';
 
 const HIT_RADIUS = 0.15;
 
@@ -8,6 +11,7 @@ export function updateTowers(game) {
   // Damage already flying towards an enemy, so towers do not waste shots on doomed targets.
   for (const e of game.enemies) e.incoming = 0;
   for (const p of game.projectiles) {
+    if (p.kind === 'shell') continue;
     const e = game.enemyById(p.targetId);
     if (e) e.incoming += p.damage;
   }
@@ -15,12 +19,14 @@ export function updateTowers(game) {
     const stats = TOWER_TYPES[t.type];
     t.cooldown = Math.max(0, t.cooldown - TICK);
     const reach = hexesToWorld(t.range);
+    const minReach = stats.minRange ? hexesToWorld(stats.minRange) : 0;
     let best = null;
     let fallback = null;
     for (const e of game.enemies) {
       const dx = e.x - t.x;
       const dz = e.z - t.z;
-      if (dx * dx + dz * dz > reach * reach) continue;
+      const d2 = dx * dx + dz * dz;
+      if (d2 > reach * reach || d2 < minReach * minReach) continue;
       if (!fallback || e.s > fallback.s) fallback = e;
       if (e.hp - e.incoming > 0 && (!best || e.s > best.s)) best = e;
     }
@@ -30,6 +36,7 @@ export function updateTowers(game) {
     t.angle = Math.atan2(target.x - t.x, target.z - t.z);
     if (t.cooldown > 0 || !best) continue;
     t.cooldown = 1 / stats.rate;
+    if (stats.blast) { fireShell(game, t, stats, best); continue; }
     const p = {
       id: game.nextProjectileId++, towerId: t.id, targetId: best.id, x: t.x, z: t.z,
       ox: t.x, oz: t.z, damage: stats.damage, speed: stats.projectileSpeed, progress: 0,
@@ -41,9 +48,40 @@ export function updateTowers(game) {
   }
 }
 
+/** Shells fly to a fixed landing point, aimed where the target will be when the shell arrives. */
+function fireShell(game, t, stats, target) {
+  const speed = ENEMY_TYPES[target.type].speed * SQRT3;
+  const aim = { x: target.x, z: target.z };
+  let flight = Math.hypot(target.x - t.x, target.z - t.z) / stats.projectileSpeed;
+  for (let i = 0; i < 2; i++) {
+    pointOnPath(game.level, Math.min(game.level.pathLength, target.s + speed * flight), aim);
+    flight = Math.hypot(aim.x - t.x, aim.z - t.z) / stats.projectileSpeed;
+  }
+  t.angle = Math.atan2(aim.x - t.x, aim.z - t.z);
+  game.projectiles.push({
+    id: game.nextProjectileId++, towerId: t.id, targetId: target.id, kind: 'shell', x: t.x, z: t.z, ox: t.x, oz: t.z,
+    tx: aim.x, tz: aim.z, damage: stats.damage, blast: hexesToWorld(stats.blast), speed: stats.projectileSpeed,
+    progress: 0, total: Math.max(0.5, flight * stats.projectileSpeed), flight: Math.max(0.2, flight),
+  });
+  game.events.push({ type: 'fire', towerId: t.id, towerType: t.type, projectileId: game.nextProjectileId - 1 });
+}
+
+function explode(game, p) {
+  const hits = game.enemies.filter((e) => Math.hypot(e.x - p.tx, e.z - p.tz) <= p.blast);
+  game.events.push({ type: 'explode', x: p.tx, z: p.tz, radius: p.blast });
+  for (const e of hits) game.hitEnemy(e, p.damage);
+}
+
 export function updateProjectiles(game) {
   for (let i = game.projectiles.length - 1; i >= 0; i--) {
     const p = game.projectiles[i];
+    if (p.kind === 'shell') {
+      p.progress = Math.min(1, p.progress + TICK / p.flight);
+      p.x = p.ox + (p.tx - p.ox) * p.progress;
+      p.z = p.oz + (p.tz - p.oz) * p.progress;
+      if (p.progress >= 1) { game.projectiles.splice(i, 1); explode(game, p); }
+      continue;
+    }
     const e = game.enemyById(p.targetId);
     if (!e) { game.projectiles.splice(i, 1); continue; }
     const dx = e.x - p.x;
