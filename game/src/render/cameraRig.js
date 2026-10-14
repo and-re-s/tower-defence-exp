@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 const STEP = Math.PI / 3;
 const PITCH = (50 * Math.PI) / 180;
-const DIST_CLOSE = 10;
+const DIST_CLOSE = 14;
 const DIST_FAR = 35;
 const PAN_LIMIT = 4.5;
 
@@ -33,6 +33,15 @@ export function createCameraRig(camera, dom) {
   }, { passive: false });
 
   const dist = () => DIST_CLOSE + (DIST_FAR - DIST_CLOSE) * rig.zoom;
+
+  /** Back to the default view, instantly (a new run starts from a known camera). */
+  rig.reset = () => {
+    rig.yawTarget = rig.yaw = 0;
+    rig.zoomTarget = rig.zoom = 1;
+    rig.panTarget.set(0, 0);
+    rig.pan.set(0, 0);
+    rig.update(0);
+  };
 
   rig.update = (dt) => {
     // WASD / arrows pan relative to the view direction.
