@@ -55,3 +55,12 @@ Decisions: bell tiers deepen the slow (40/50/60%, upgrades 50/85) since it deals
 Known issues: bell ring is only tested by screenshot in the smoke path; no Saltmarsh yet so shellback card/tips are B-023; bell range ring preview uses the same amber ring.
 Tried and reverted: shellbacks 2..5 per wave with full hp scaling made 6 posts lose.
 How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('bell',q,r)` next to the path, `skipToWave(3)`, step and read `enemies[].slowed/speedFactor`; `skipToWave(6)` + step 60*24 for shellbacks; `audioLog()` has bell_ring / armor_hit. npm test has 4 new tests.
+
+## Round 08
+Items: B-043 -> review, B-010 -> review (fix of the armor spark)
+Changes: armor spark is now a bright white-yellow burst (hot core flash plus 9 chips, drawn on top, about 0.2 s, 3-7x larger). Shellback shell stripes are warm ochre instead of cyan, so only the teal ring means slowed. At short/narrow viewports (640x420) the camera backs off and the build menu is clamped between the HUD chips and the bottom bar, with a compact CSS mode under 560 px height.
+Decisions: spark particles use depthTest false so they read over the crowd. Camera fit = 1.78/aspect (and x1.15 under 500 px height), applied only as the camera zooms out.
+Disputed: hover outline "one hex in front of the tower" — the outline is at tile.height and frames the tower's hex once the build drop-in settles (verified: 90 ticks after build, tower foot at hex centre, outline around it). The evaluator's screenshot was taken during the 1.4-unit drop animation (about 0.45 s after build) and with the tall model. No code change.
+Known issues: bell range preview still amber; on 640x420 the open build menu covers part of the island.
+Tried and reverted: nothing.
+How to test: B-010 repro in backlog (`build('harpoon',-3,2)` x2, `skipToWave(6)`, step until `armor_hit`, step(1..4), screenshot). Small view: viewport 640x420, `start`, click a sand hex. Hover: build harpoon (0,-1), step(90), hover its body.

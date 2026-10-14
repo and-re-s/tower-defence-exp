@@ -157,3 +157,14 @@ kbd { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding:
 #tower-panel .tp-up.poor .tp-cost { color: var(--coral); }
 #tower-panel .tp-up:disabled { background: rgba(227, 194, 122, 0.1); color: var(--sand); opacity: 0.6; cursor: default; transform: none; filter: none; justify-content: center; }
 #tower-panel .tp-sell .tp-cost { color: var(--amber); }
+
+/* short viewports: compact build menu and tower bar */
+@media (max-height: 560px) {
+  #build-menu { min-width: 170px; padding: 6px; }
+  #build-menu .menu-title { margin-bottom: 4px; }
+  .build-opt { padding: 5px 10px; font-size: 15px; }
+  .build-opt + .build-opt { margin-top: 4px; }
+  #tower-bar { bottom: 8px; padding: 4px; }
+  .bar-slot svg { width: 28px; height: 28px; }
+  #next-wave { bottom: 64px; font-size: 16px; padding: 6px 18px; }
+}

@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-043 · fix · todo · S — Round 07 minor bugs bundle
+### B-043 · fix · review · S — Round 07 minor bugs bundle
 Found: round-07 (minor)
 Repro/Done when:
 - the hover/selection hex outline is drawn at ground level, so on a tower hex it appears one hex in front of the tower (hover-occupied2.jpg: tower at (595,285), pale outline at (596,332)); draw it at the tile's top height so it frames the hex the tower stands on;
@@ -20,7 +20,7 @@ Repro/Done when:
 
 
 
-### B-010 · M1 · todo · M — Tide Bell and the Shellback
+### B-010 · M1 · review · M — Tide Bell and the Shellback
 Failed round-07: "Done when" line 3 (armored spark visible in screenshots): the bell ring is clearly visible (bell-18.jpg) and `bell_ring`/`armor_hit` are in `audioLog()`, but at the tick of an `armor_hit` (harpoon on a Shellback, no bell in range, camera default and zoom 0.2) no spark is distinguishable (armor-spark-nobell.jpg, armor-crop.jpg, armor-close.jpg). Repro: `start({level:1,seed:1}); pause(); grantSalvage(3000); build('harpoon',-3,2); build('harpoon',-3,1); setTargeting(1,'strongest'); skipToWave(6)`, step 20 ticks at a time until a Shellback has progress > 0.05, then step(1) until `audioLog()` shows a new `armor_hit` and screenshot. Make the spark a bright white-yellow burst of a few chips, large enough to read at the default camera, lasting ~0.2 s. Lines 1, 2 and 4 verified (slow 0.6x measured from progress; harpoon 6 vs 12 on Scuttler, cannon 24 on both; bar shows 3 towers with hotkeys 1-3) and need not be rebuilt.
 Why: counter-choices — armor punishes harpoon spam, slows set up the cannon.
 Behavior: The Tide Bell (cost 70) is an open arch with a bell that rings every 2 s, sending an expanding ring that slows ground enemies within 2.5 hexes by 40% for 2 s (slowed enemies show a Shallows-tinted trail). The Shellback (tall hermit shell, 120 hp, slow) takes 50% less damage from harpoons; armored hits spark and make a lower crunch.

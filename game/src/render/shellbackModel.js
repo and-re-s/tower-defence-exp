@@ -20,7 +20,7 @@ function kit() {
     shell, stripe, body, leg, claw,
     spot: new THREE.IcosahedronGeometry(0.045, 0),
     shellMat: new THREE.MeshStandardMaterial({ color: 0x3a2f4d, flatShading: true, roughness: 0.5 }),
-    stripeMat: new THREE.MeshStandardMaterial({ color: 0x0b3a33, emissive: PAL.brine, emissiveIntensity: 1.6, flatShading: true }),
+    stripeMat: new THREE.MeshStandardMaterial({ color: 0x4a2a1a, emissive: 0xc8742a, emissiveIntensity: 1.1, flatShading: true }),
     skin: new THREE.MeshStandardMaterial({ color: 0x1d3157, flatShading: true, roughness: 0.55 }),
   };
   return shared;

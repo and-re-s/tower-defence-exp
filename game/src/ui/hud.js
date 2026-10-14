@@ -64,8 +64,12 @@ export function createHud(ui, hudRow, game, actions) {
       const w = menu.offsetWidth || 190;
       const h = menu.offsetHeight || 80;
       const x = Math.max(8, Math.min(window.innerWidth - w - 8, screen.x - w / 2));
+      // Stay below the Light/Salvage chips (top 84 px) and above the Next wave button and tower bar (bottom 150 px).
+      const top = 84;
+      const bottom = window.innerHeight - 8;
       let y = screen.y + 34;
-      if (y + h > window.innerHeight - 8) y = Math.max(8, screen.y - 70 - h);
+      if (y + h > bottom) y = screen.y - 70 - h;
+      y = Math.max(top, Math.min(bottom - h, y));
       menu.style.translate = `${Math.round(x)}px ${Math.round(y)}px`;
     },
     setArmed(type) { for (const [k, b] of Object.entries(barBtns)) b.classList.toggle('armed', k === type); },

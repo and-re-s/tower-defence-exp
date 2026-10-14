@@ -13,6 +13,8 @@ export function createFx(scene) {
     smoke: new THREE.MeshBasicMaterial({ color: 0xcfc6b2, transparent: true, opacity: 0.55, depthWrite: false }),
     fire: new THREE.MeshBasicMaterial({ color: PAL.amber, transparent: true, depthWrite: false }),
     debris: new THREE.MeshBasicMaterial({ color: PAL.sand, transparent: true, depthWrite: false }),
+    // Armor sparks: bright white-yellow, drawn over everything so they read at the default camera.
+    spark: new THREE.MeshBasicMaterial({ color: 0xfff6b8, transparent: true, depthWrite: false, depthTest: false }),
   };
   // Flash discs: an expanding ground ring and a bright dome, each with its own material for fading.
   const ringGeo = new THREE.RingGeometry(0.8, 1, 32);
@@ -48,6 +50,7 @@ export function createFx(scene) {
     if (parts.length >= MAX) return;
     const mesh = free.pop() || new THREE.Mesh(geo, mats.hit);
     mesh.material = mats[kind];
+    mesh.renderOrder = kind === 'spark' ? 11 : 0;
     mesh.position.set(x, y, z);
     mesh.scale.setScalar(size);
     scene.add(mesh);
@@ -83,7 +86,16 @@ export function createFx(scene) {
     chips(x, y, z) { burst('debris', x, y + 0.3, z, 12, 2.0, 1.4, Math.floor(z * 9)); },
     bellRing,
     /** White-hot sparks for a hit that armor mostly shrugged off. */
-    spark(x, z) { burst('hit', x, 0.7, z, 7, 2.6, 0.9, Math.floor(x * 17)); burst('fire', x, 0.7, z, 4, 2.0, 0.8, Math.floor(z * 5)); },
+    spark(x, z) {
+      // A hot core flash plus a ring of chips; ~0.2 s, large enough to read from the default camera.
+      spawn('spark', x, 0.8, z, 0, 0.2, 0, 0.14, 7);
+      const seed = Math.floor(x * 17);
+      for (let i = 0; i < 9; i++) {
+        const a = (i + seed) * 2.39996;
+        const sp = 3.2 + (i % 3) * 0.8;
+        spawn('spark', x, 0.8, z, Math.cos(a) * sp, 1.2 + (i % 4) * 0.5, Math.sin(a) * sp, 0.2 + (i % 2) * 0.04, 3.4);
+      }
+    },
     /** One drip of Shallows tint behind a slowed enemy. */
     trail(x, z) { spawn('glow', x, 0.25, z, 0, 0.3, 0, 0.5, 1.1); },
     kill(x, z) { burst('glow', x, 0.4, z, 12, 2.1, 1, Math.floor(z * 11)); },

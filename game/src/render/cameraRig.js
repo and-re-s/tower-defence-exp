@@ -32,7 +32,9 @@ export function createCameraRig(camera, dom) {
     rig.setZoom(rig.zoomTarget + Math.sign(e.deltaY) * 0.2);
   }, { passive: false });
 
-  const dist = () => DIST_CLOSE + (DIST_FAR - DIST_CLOSE) * rig.zoom;
+  // Refit for narrow or short viewports: 16:9 at 720p is the reference, anything tighter backs off.
+  const fit = () => Math.max(1, 1.78 / (camera.aspect || 1.78)) * (window.innerHeight < 500 ? 1.15 : 1);
+  const dist = () => (DIST_CLOSE + (DIST_FAR - DIST_CLOSE) * rig.zoom) * (1 + (fit() - 1) * rig.zoom);
 
   /** Back to the default view, instantly (a new run starts from a known camera). */
   rig.reset = () => {
