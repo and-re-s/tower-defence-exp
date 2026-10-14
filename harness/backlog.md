@@ -7,13 +7,12 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-042 · fix · review · S — Round 06 minor bugs bundle
-Found: round-06 (minor)
+### B-043 · fix · todo · S — Round 07 minor bugs bundle
+Found: round-07 (minor)
 Repro/Done when:
-- hovering an occupied hex (tower base) shows the same amber outline as a buildable hex (hover-occupied.jpg); use a distinct "select" cue (e.g. brighter ring/pointer) or none, so amber still means "you can build here";
-- the wheel zoom range is tiny (`state().camera.zoom` only goes 1 -> 0.76, towers stay small); allow a closer view (e.g. down to ~0.4) so tier changes on towers are readable;
-- `state().camera.yawDeg` reaches 360 after a full rotation; normalize to 0..359;
-- the upgrade sparkle is only a few faint dots (upgrade-flipbook.jpg): make it readable at the default camera.
+- the hover/selection hex outline is drawn at ground level, so on a tower hex it appears one hex in front of the tower (hover-occupied2.jpg: tower at (595,285), pale outline at (596,332)); draw it at the tile's top height so it frames the hex the tower stands on;
+- at a 640x420 viewport the build menu overlaps the Light/Salvage HUD and the island is cropped (small-viewport.jpg); keep the menu inside the free area and refit the camera to the viewport;
+- the Shellback's own shell rings are cyan-white like the slowed ring, so a slowed and an unslowed Shellback look alike (armor-spark-nobell.jpg: no bell in range, still ringed); give the slow ring a clearly different colour or shape from the shell.
 
 ---
 
@@ -21,17 +20,8 @@ Repro/Done when:
 
 
 
-### B-009 · M1 · review · M — Select a tower: upgrade, sell, targeting
-Failed round-06: "Done when" line 2 (refund 70%): cannon (90) sells for 62 instead of 63 and a tier-2 cannon (170 spent) for 118 instead of 119, because `Math.floor(spent * 0.7)` hits floating point (90*0.7 = 62.999...). Repro: `start({level:1,seed:1}); grantSalvage(500); const id=build('cannon',0,-1).id; sell(id)` returns refund 62. Fix: round with an epsilon (e.g. `Math.floor(spent*7/10)`) and re-check 50, 90, 110, 140, 170, 200, 290. Everything else (tier/damage/rate, tier 3 max, targeting strongest, panel placement, Esc/right click) was verified and need not be rebuilt.
-Why: depth through investment decisions; the decision stays on the map.
-Behavior: Clicking a tower selects it: its range ring appears and a small panel anchored next to it shows its stats, "Upgrade for N" (tiers 2 and 3, each visibly taller or more ornate), targeting priority (first / strongest / closest) and "Sell for N" (70% refund). Esc or right click deselects.
-Done when:
-- upgrading raises `tier` and the tower's damage or rate in `state().towers` and costs salvage; the model visibly changes per tier; tier 3 is the maximum;
-- selling removes the tower, frees the hex and refunds 70% of the total spent (base + upgrades);
-- switching targeting to "strongest" makes the tower target the highest-hp enemy in range (check the target id in `state()`);
-- the panel never covers the selected tower and stays on screen at the island edges.
-
-### B-010 · M1 · review · M — Tide Bell and the Shellback
+### B-010 · M1 · todo · M — Tide Bell and the Shellback
+Failed round-07: "Done when" line 3 (armored spark visible in screenshots): the bell ring is clearly visible (bell-18.jpg) and `bell_ring`/`armor_hit` are in `audioLog()`, but at the tick of an `armor_hit` (harpoon on a Shellback, no bell in range, camera default and zoom 0.2) no spark is distinguishable (armor-spark-nobell.jpg, armor-crop.jpg, armor-close.jpg). Repro: `start({level:1,seed:1}); pause(); grantSalvage(3000); build('harpoon',-3,2); build('harpoon',-3,1); setTargeting(1,'strongest'); skipToWave(6)`, step 20 ticks at a time until a Shellback has progress > 0.05, then step(1) until `audioLog()` shows a new `armor_hit` and screenshot. Make the spark a bright white-yellow burst of a few chips, large enough to read at the default camera, lasting ~0.2 s. Lines 1, 2 and 4 verified (slow 0.6x measured from progress; harpoon 6 vs 12 on Scuttler, cannon 24 on both; bar shows 3 towers with hotkeys 1-3) and need not be rebuilt.
 Why: counter-choices — armor punishes harpoon spam, slows set up the cannon.
 Behavior: The Tide Bell (cost 70) is an open arch with a bell that rings every 2 s, sending an expanding ring that slows ground enemies within 2.5 hexes by 40% for 2 s (slowed enemies show a Shallows-tinted trail). The Shellback (tall hermit shell, 120 hp, slow) takes 50% less damage from harpoons; armored hits spark and make a lower crunch.
 Done when:

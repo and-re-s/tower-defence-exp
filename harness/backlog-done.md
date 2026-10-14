@@ -14,3 +14,5 @@ One line per item.
 - B-040 · M0 · S — Round 04 minor bugs bundle — done round-05 (81d02c8)
 - B-008 · M1 · M — Cliff Cannon and the high-ground rule — done round-05 (81d02c8)
 - B-041 · M0 · S — Round 05 minor bugs bundle — done round-06 (19fabd5)
+- B-042 · M0 · S — Round 06 minor bugs bundle — done round-07 (75c22ff)
+- B-009 · M1 · M — Select a tower: upgrade, sell, targeting — done round-07 (75c22ff)
