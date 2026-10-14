@@ -7,33 +7,15 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-037 · fix · review · S — Round 01 minor bugs bundle
-Found: round-01 (minor)
+### B-038 · fix · todo · S — Round 02 minor bugs bundle
+Found: round-02 (minor)
 Repro/Done when:
-- `start()` and Retry reset the camera to the default view (yaw 0, zoom 1, pan 0,0); verify with `state().camera` after zooming/rotating/panning and then calling `start({level:1,seed:1})` or clicking Retry or Play from the menu;
-- `audioLog()` is cleared when a run starts (after `start()` the log has no entries from the previous run, and its `time` values are monotonic);
-- after `pause()` then `step(n)` the rendered frame shows freshly spawned enemies at full size (currently a screenshot right after `step(780)` shows only tiny white eye dots; a further `step(60)` shows the crabs), so flip-book testing works: spawn/emerge visuals must advance with the stepped game time;
-- the fully zoomed-in camera (zoom 0) shows about 3-4 hexes across the screen and the beam as a hard-edged yellow wedge covering a quarter of the screen: raise the minimum zoom distance so the close view still shows a tower and its neighbours (about 8-10 hexes across);
-- the title subtitle "Hold the lamp. Keep the dark at bay." is legible over the island and beam (currently sand text on sand tiles and the yellow beam crosses it);
-- favicon request returns 404 in the console: add a favicon.
+- the build hotkey `1` works while the screen is `paused` as documented in test-api.md (repro: `start({level:1,seed:1}); pause();` click a sand hex, press `1`: no tower is built and salvage stays 150; after `resume()` the same key builds). Either fix the key or correct the doc, but the "1" hint on the menu button must always be true;
+- level 1 is no longer trivially won: with 3 Harpoon Posts (`build` at (-3,3), (-2,3), (-4,1)) the run reaches wave 4 at Light 20 with 305 unspent salvage, and 8 posts win with no leak at all (Light 20/20, 544 salvage left at the end); tune wave size/hp or salvage so a mediocre layout loses Light and salvage has to be spent carefully (a 6-post layout built once at the start should lose several Light, a 3-post layout should lose);
+- the range ring while hovering is a muddy grey translucent disc over the sea; make it a thin amber ring with a faint warm fill that does not darken the island.
 
-### B-003 · M0 · review · M — Build Harpoon Posts with salvage
-Why: pillar "The island is the board"; the player's half of the core loop.
-Behavior: The player starts with 150 salvage. Hovering a hex outlines it amber if buildable (sand, grass, rock, empty) or coral if not. Clicking a buildable hex and choosing "Harpoon Post" (cost 50) places a tall wooden post with a ballista top; it turns to face and fires a visible harpoon at the first enemy in range (3.5 hexes; +1 on rock). Kills give salvage, which visibly updates on the HUD.
-Done when:
-- building on path, water, the lighthouse or an occupied hex is impossible and shows the coral outline; building with less than 50 salvage is refused and the cost shows in Signal Coral;
-- after a build, `state().towers` lists the tower with type, hex and tier, and `state().salvage` dropped by 50; `audioLog()` shows a build sound;
-- the tower visibly rotates toward its target and fires a projectile that travels to the enemy; enemies take damage and die, and each kill adds salvage;
-- the range ring is visible while hovering a hex in build mode, and is larger on rock tiles.
 
-### B-004 · M0 · review · M — Six waves, victory, and play again
-Why: completes the loop "start → play → win or lose → play again".
-Behavior: Driftwood Cove has 6 scripted waves of Scuttlers and Skitterers (thin, fast shrimp) with growing counts. Between waves there is a short breather with a "Next wave" button (and Space). Clearing a wave grants a bonus. After the last wave is cleared with Light above 0, a victory screen shows the Light left and buttons Retry and Menu.
-Done when:
-- `state()` exposes `wave` and `waveCount` (6) and a `phase` (breather / wave); waves start automatically after the breather or on "Next wave";
-- Skitterers are visibly different in silhouette and move faster than Scuttlers (compare positions over time in `state()`);
-- a win is reachable by a reasonable tower layout at 8× speed: `screen` becomes `won` and the victory screen appears; `audioLog()` shows a wave-start and a victory sound;
-- Retry from both end screens starts a fresh run (wave 1, Light 20, salvage 150, no towers, no enemies) with no errors in `errors()`.
+
 
 ### B-005 · M0 · todo · S — Title screen and the in-game HUD
 Why: the brief requires a main menu; the HUD makes the state of the battle readable.
