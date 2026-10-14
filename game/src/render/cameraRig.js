@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 const STEP = Math.PI / 3;
 const PITCH = (50 * Math.PI) / 180;
-const DIST_CLOSE = 14;
+const DIST_CLOSE = 8;
 const DIST_FAR = 35;
 const PAN_LIMIT = 4.5;
 
@@ -29,7 +29,7 @@ export function createCameraRig(camera, dom) {
   window.addEventListener('blur', () => keys.clear());
   dom.addEventListener('wheel', (e) => {
     e.preventDefault();
-    rig.setZoom(rig.zoomTarget + Math.sign(e.deltaY) * 0.12);
+    rig.setZoom(rig.zoomTarget + Math.sign(e.deltaY) * 0.2);
   }, { passive: false });
 
   const dist = () => DIST_CLOSE + (DIST_FAR - DIST_CLOSE) * rig.zoom;
@@ -71,7 +71,7 @@ export function createCameraRig(camera, dom) {
   };
 
   rig.info = () => ({
-    yawDeg: Math.round(((rig.yawTarget * 180) / Math.PI) * 100) / 100,
+    yawDeg: ((Math.round((rig.yawTarget * 180) / Math.PI) % 360) + 360) % 360,
     zoom: Math.round(rig.zoomTarget * 100) / 100,
     pan: [Math.round(rig.panTarget.x * 100) / 100, Math.round(rig.panTarget.y * 100) / 100],
   });

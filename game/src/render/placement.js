@@ -22,7 +22,7 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
   const mk = (color, opacity) => new THREE.MeshBasicMaterial({
     color, transparent: true, opacity, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
   });
-  const mats = { amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.9), disc: mk(0xffa23a, 0.06) };
+  const mats = { select: mk(0xf3e9d2, 0.5), amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.9), disc: mk(0xffa23a, 0.06) };
   mats.disc.blending = THREE.AdditiveBlending; // warm glow that never darkens the island
   const outline = new THREE.Mesh(outlineGeo, mats.amber);
   const ring = new THREE.Mesh(ringGeo, mats.ring);
@@ -118,7 +118,7 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
       if (active) {
         const blocker = game.buildBlocker(type, active.q, active.r);
         const ok = !blocker || blocker === 'salvage';
-        outline.material = ok || blocker === 'occupied' ? mats.amber : mats.coral;
+        outline.material = blocker === 'occupied' ? mats.select : ok ? mats.amber : mats.coral;
         outline.visible = true;
         place(active, type, time, ok ? 'ok' : 'no');
       }

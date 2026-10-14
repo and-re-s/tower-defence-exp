@@ -320,3 +320,10 @@ test('B-009: strongest targeting picks the highest-hp enemy in range, first pick
   assert.equal(t.targetId, strong.id);
   assert.equal(g.setTargeting(id, 'bogus'), false);
 });
+
+test('B-009: sell refunds are exact at 70% (no float error)', () => {
+  const want = { 50: 35, 90: 63, 110: 77, 140: 98, 170: 119, 200: 140, 290: 203 };
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  for (const [spent, refund] of Object.entries(want)) assert.equal(g.sellValue({ spent: Number(spent) }), refund);
+});

@@ -64,7 +64,11 @@ export function createFx(scene) {
       flash(x, 0.6, z, radius, 0.45);
     },
     /** Amber sparkle fountain used by upgrades. */
-    sparkle(x, y, z) { burst('fire', x, y + 0.4, z, 14, 2.2, 1.1, Math.floor(x * 5)); flash(x, y + 0.1, z, 1.1, 0.5); },
+    sparkle(x, y, z) {
+      burst('fire', x, y + 0.2, z, 22, 3.2, 1.9, Math.floor(x * 5));
+      burst('fire', x, y + 0.5, z, 16, 2.4, 1.5, Math.floor(z * 3));
+      flash(x, y - 0.6, z, 1.7, 0.6);
+    },
     /** Sand chips thrown up when a tower is sold. */
     chips(x, y, z) { burst('debris', x, y + 0.3, z, 12, 2.0, 1.4, Math.floor(z * 9)); },
     kill(x, z) { burst('glow', x, 0.4, z, 12, 2.1, 1, Math.floor(z * 11)); },

@@ -207,7 +207,7 @@ export class Game {
 
   /** Refund for selling this tower: 70% of everything spent on it. */
   sellValue(t) {
-    return Math.floor(t.spent * SELL_REFUND);
+    return Math.floor(Math.round(t.spent * SELL_REFUND * 1000) / 1000);
   }
 
   upgrade(id) {
