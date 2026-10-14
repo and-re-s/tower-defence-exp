@@ -7,14 +7,14 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-046 · fix · todo · S — Sky dome shader does not compile (no sky, no stars, GL errors every frame)
+### B-046 · fix · review · S — Sky dome shader does not compile (no sky, no stars, GL errors every frame)
 Found: round-10 (major)
 Repro: open http://localhost:4173/ and read the console: `THREE.WebGLProgram: Shader Error ... ERROR: 0:160: '#' : invalid character` for the ShaderMaterial in src/render/daylight.js line 40, followed by `WebGL: INVALID_OPERATION: useProgram: program not valid` on every frame until "too many errors". The `#include <colorspace_fragment>` sits on the same line after `gl_FragColor = ...;`, so the preprocessor directive is not at the start of a line.
 Done when:
 - the console shows no THREE.WebGLProgram error and no useProgram warnings on the title, in a level and at night;
 - the sky dome and stars are actually rendered (a screenshot of the night with the camera zoomed in/out shows the gradient and stars, or the dome is visible somewhere), or the dome is removed and the spec/progress claims are dropped.
 
-### B-047 · fix · todo · S — Round 10 minor bugs bundle
+### B-047 · fix · review · S — Round 10 minor bugs bundle
 Found: round-10 (minor)
 Repro/Done when:
 - at 400x700 the next-wave preview chip is clipped by the right edge (preview-chip rect right 433 in a 400 px viewport; vp-400x700.jpg), at 500x350 it collapses to an icon with "8"; HUD chips must fit or wrap inside the viewport;
@@ -27,7 +27,7 @@ Repro/Done when:
 
 
 
-### B-015 · M1 · todo · M — Broodmother and Gloom Gulls
+### B-015 · M1 · review · M — Broodmother and Gloom Gulls
 Why: varied situations — burst threats and an air route that ignores the path.
 Behavior: The Broodmother (huge brood crab, slow, 220 hp) splits into 4 Skitterers when killed. Gloom Gulls fly at a fixed height straight from their spawn to the lighthouse, ignoring the path; only Harpoon Posts, lantern burn (and later the beam) can hurt them; cannons and bells ignore them.
 Done when:

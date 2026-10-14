@@ -33,6 +33,7 @@ export function updateTowers(game) {
     let fallback = { e: null, score: -Infinity };
     for (const e of game.enemies) {
       if (!e.revealed) continue; // cloaked and outside lantern light
+      if (e.flying && (stats.blast || t.type !== 'harpoon')) continue; // only harpoons reach gulls
       const dx = e.x - t.x;
       const dz = e.z - t.z;
       const d2 = dx * dx + dz * dz;
@@ -65,7 +66,7 @@ function updateBell(game, t) {
   t.cooldown = Math.max(0, t.cooldown - TICK);
   if (t.cooldown > 0) return;
   const reach = hexesToWorld(t.range);
-  const inside = game.enemies.filter((e) => (e.x - t.x) ** 2 + (e.z - t.z) ** 2 <= reach * reach);
+  const inside = game.enemies.filter((e) => !e.flying && (e.x - t.x) ** 2 + (e.z - t.z) ** 2 <= reach * reach);
   if (!inside.length) return;
   const { rate, slow } = { ...TOWER_TYPES.bell, ...towerStats('bell', t.tier) };
   t.cooldown = 1 / rate;
@@ -96,7 +97,7 @@ function fireShell(game, t, stats, target) {
 }
 
 function explode(game, p) {
-  const hits = game.enemies.filter((e) => Math.hypot(e.x - p.tx, e.z - p.tz) <= p.blast);
+  const hits = game.enemies.filter((e) => !e.flying && Math.hypot(e.x - p.tx, e.z - p.tz) <= p.blast);
   game.events.push({ type: 'explode', x: p.tx, z: p.tz, radius: p.blast });
   for (const e of hits) game.hitEnemy(e, p.damage);
 }

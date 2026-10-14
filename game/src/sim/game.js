@@ -1,7 +1,7 @@
 import { SQRT3 } from './hex.js';
 import { createRng } from './rng.js';
 import { buildLevel, pointOnPath } from './levels.js';
-import { ENEMY_TYPES } from './enemies.js';
+import { ENEMY_TYPES, GULL_HEIGHT } from './enemies.js';
 import { TICK } from './clock.js';
 import { BUILDABLE_TERRAIN, TOWER_TYPES, TIERS, MAX_TIER, TARGETING, SELL_REFUND, towerRange, towerStats } from './towers.js';
 import { updateProjectiles, updateTowers } from './combat.js';
@@ -284,6 +284,12 @@ export class Game {
     this.kills += 1;
     this.enemies.splice(this.enemies.indexOf(e), 1);
     this.events.push({ type: 'kill', id: e.id, enemyType: e.type, x: e.x, z: e.z, reward });
+    const splits = ENEMY_TYPES[e.type].splits;
+    for (let i = 0; i < (splits || 0); i++) {
+      // Spread the brood a little along the path so they do not overlap.
+      const child = this.spawnEnemy('skitterer', { s: Math.max(0, e.s + (i - (splits - 1) / 2) * 0.28), spawned: true });
+      child.fromBrood = e.id;
+    }
   }
 
   startWave() {
@@ -301,14 +307,27 @@ export class Game {
     this.events.push({ type: 'waveStart', wave: this.wave });
   }
 
-  spawnEnemy(type) {
+  spawnEnemy(type, opts = {}) {
     const stats = ENEMY_TYPES[type];
     // Armored types scale at half rate: they are already tough against harpoons.
     const hp = Math.round(stats.hp * (stats.armor ? 1 + (this.hpScale - 1) * 0.5 : this.hpScale));
     const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0, slow: 0, slowUntil: -1, lit: false, marked: false, burn: 0, revealed: !stats.cloaked };
-    pointOnPath(this.level, 0, e);
+    if (stats.flying) {
+      const a = this.level.pathPoints[0];
+      const l = this.level.lighthouse;
+      e.flying = true;
+      e.y = GULL_HEIGHT;
+      e.sx = a.x; e.sz = a.z;
+      e.flightLength = Math.hypot(l.x - a.x, l.z - a.z);
+      e.heading = Math.atan2(l.x - a.x, l.z - a.z);
+      e.x = a.x; e.z = a.z;
+    } else {
+      pointOnPath(this.level, opts.s || 0, e);
+      if (opts.s) e.s = opts.s;
+    }
     this.enemies.push(e);
-    this.events.push({ type: 'spawn', id: e.id, enemyType: type });
+    this.events.push({ type: 'spawn', id: e.id, enemyType: type, split: !!opts.spawned });
+    return e;
   }
 
   updateEnemies() {
@@ -318,14 +337,19 @@ export class Game {
       const stats = ENEMY_TYPES[e.type];
       const slow = this.time < e.slowUntil ? 1 - e.slow : 1;
       e.s += stats.speed * slow * SQRT3 * TICK;
-      if (e.s >= lvl.pathLength) {
+      const end = e.flying ? e.flightLength : lvl.pathLength;
+      if (e.s >= end) {
         this.light -= stats.leak;
         this.lastLeakTime = this.time;
         this.events.push({ type: 'leak', id: e.id, enemyType: e.type, leak: stats.leak });
         this.enemies.splice(i, 1);
         continue;
       }
-      pointOnPath(lvl, e.s, e);
+      if (e.flying) {
+        const k = e.s / e.flightLength;
+        e.x = e.sx + (lvl.lighthouse.x - e.sx) * k;
+        e.z = e.sz + (lvl.lighthouse.z - e.sz) * k;
+      } else pointOnPath(lvl, e.s, e);
     }
   }
 
@@ -377,7 +401,7 @@ export class Game {
       })),
       projectiles: this.projectiles.map((p) => ({ id: p.id, kind: p.kind || 'bolt', towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
       enemies: this.enemies.map((e) => ({
-        id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
+        id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / (e.flying ? e.flightLength : lvl.pathLength)), flying: !!e.flying, y: e.flying ? e.y : undefined,
         cloaked: !!ENEMY_TYPES[e.type].cloaked, revealed: e.revealed, lit: e.lit, marked: e.marked,
         slowed: this.time < e.slowUntil, speedFactor: this.time < e.slowUntil ? round(1 - e.slow, 2) : 1,
       })),

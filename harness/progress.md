@@ -80,3 +80,11 @@ Decisions: fog near/far follow camera distance (root cause of the dark/invisible
 Known issues: sky dome and stars are barely visible from the default 50-degree camera (it only sees the sea); speed beyond 3x via test API shows e.g. 8x and F returns to 1x.
 Tried and reverted: darker night (sun 0.5, hemi 1.15) made the island unreadable.
 How to test: `start({level:1,seed:1})`, press Esc -> `state().pauseMenu`, time frozen; F then `timeScale` 2. `pause(); skipToWave(1)` vs `skipToWave(6); step(600)` and compare screenshots (`timeOfDay` 0 vs 1, `daylight`). Viewports 400x700 and 500x350. `spawnEnemy('mistwalker')` for ripples. npm test has tests/daylight.test.js.
+
+## Round 11
+Items: B-046 -> review, B-047 -> review (one commit), B-015 -> review
+Changes: sky dome shader compiles (no GL errors). Golden hour is warm (mauve fog, warmer sea); night has more ambient lift so towers read. HUD chips wrap inside narrow viewports; pause menu blocks scene clicks and F; cloaked Mistwalker ripple is violet. Broodmother (slow, 220 hp, bursts into 4 Skitterers) and Gloom Gull (flies straight to the lighthouse at height 3.2 with a ground shadow; only harpoons and lantern light hurt it) join level 1 (Broodmother waves 4 and 6, gulls waves 5-6) so they can be seen now.
+Decisions: gull is `flying` in the sim (progress along its own straight line); cannon targeting, blasts and bell pulses skip flying enemies. Gull/brood counts were cut so 6 posts + 1 lantern still win (12 Light left).
+Known issues: sky dome is barely visible from the default camera (only a thin band above the sea); bolts shot at gulls are drawn at ground height; no enemy cards (B-023).
+Tried and reverted: broodmothers 2 and gulls 3-4 made 6 posts lose.
+How to test: `start({level:1,seed:1}); pause(); spawnEnemy('broodmother'); spawnEnemy('gull'); step(300)`; kill the brood with harpoons and count `skitterer`s. npm test has tests/brood.test.js. Console should show no WebGLProgram errors.

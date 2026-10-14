@@ -120,7 +120,7 @@ test('waves: skitterers are faster than scuttlers; calling early pays more the e
   assert.equal(g.snapshot().waveCount, 6);
   const types = new Set();
   for (const w of g.level.def.waves) for (const gr of w.groups) types.add(gr.type);
-  assert.deepEqual([...types].sort(), ['mistwalker', 'scuttler', 'shellback', 'skitterer']);
+  assert.deepEqual([...types].sort(), ['broodmother', 'gull', 'mistwalker', 'scuttler', 'shellback', 'skitterer']);
   void TICK;
 });
 

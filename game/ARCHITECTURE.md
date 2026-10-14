@@ -8,7 +8,7 @@ Vite + three.js, ES modules, no network. Run from `game/`: `npm run build`, `npm
   - `rng.js` mulberry32 `createRng(seed)` and `hash2` (stable authored noise).
   - `levels.js` level data (`LEVELS`), `buildLevel(id)` -> tiles, tileMap, path hexes, pathPoints
     (enemy walking line starting in the surf), lighthouse; `pointOnPath(level, s, out)`.
-  - `enemies.js` enemy stat table (scuttler, skitterer, shellback, mistwalker: hp, speed in hexes/s, leak, reward, armor, cloaked) and `ENEMY_NAMES`.
+  - `enemies.js` enemy stat table (scuttler, skitterer, shellback, mistwalker, broodmother (splits into 4 skitterers in `killEnemy`), gull (flying, straight line to the lighthouse, ignored by cannons/bells): hp, speed in hexes/s, leak, reward, armor, cloaked) and `ENEMY_NAMES`.
   - `lantern.js` `updateLanterns`: lit/marked/revealed flags, burn damage; towers skip enemies that are not `revealed`; `hitEnemy` adds the +15% mark.
   - `towers.js` tower stat table (Harpoon Post, Cliff Cannon, Tide Bell, Lantern: minRange, blast, slow, mark, hotkey), `TIERS` (upgrade cost/damage/rate), `towerStats`, `TARGETING`, buildable terrain, `towerRange` (+1 on rock). `clock.js` TICK.
   - `combat.js` `updateBell` (pulse slows enemies via `slowUntil`/`slow`), tower targeting (priority first/strongest/closest, skips doomed targets), homing bolts; cannon `fireShell` lobs a shell at a predicted path point and `explode` damages all enemies in the blast.
@@ -23,7 +23,7 @@ Vite + three.js, ES modules, no network. Run from `game/`: `npm run build`, `npm
   - `towerView.js` Harpoon Post and Cliff Cannon models: build bounce + dust ring (game time), turning, recoil. `projectileView.js` pooled bolts and arcing shells (smoke trail via fx).
   - `fx.js` pooled hit/kill particles on the anim clock. `placement.js` hex picking (a click on a tower body resolves to its own hex), hover outline, range ring.
   - `bellModel.js` Tide Bell model; `shellbackModel.js` Shellback model (both own their kit). Slowed enemies get a teal ring + drip trail (enemyView, fx.trail); `fx.bellRing`, `fx.spark`.
-  - `lanternModel.js` Lantern model; `lightPool.js` instanced warm hex pool on the lit tiles; `mistwalkerModel.js` jellyfish (cloaked/lit materials); `spawnMarker.js` pulsing next-wave beach marker.
+  - `lanternModel.js` Lantern model; `lightPool.js` instanced warm hex pool on the lit tiles; `mistwalkerModel.js` jellyfish (cloaked/lit materials); `broodModel.js`, `gullModel.js` Broodmother and Gloom Gull models; `spawnMarker.js` pulsing next-wave beach marker.
   - `daylight.js` time-of-day keyframes (sun, hemi, fog, sea, exposure), sky dome and stars; `apply(t)`; `main.js` eases `tod` toward `game.timeOfDay` on the anim clock and scales fog with `rig.distance()`.
   - `palette.js` spec palette constants.
 - `src/audio/audio.js` the only sound module: Web Audio synth, unlock on gesture, surf ambience,

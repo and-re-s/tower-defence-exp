@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
 import { buildShellback } from './shellbackModel.js';
+import { buildBroodmother } from './broodModel.js';
+import { buildGull } from './gullModel.js';
 import { buildMistwalker, shimmerMistwalkers } from './mistwalkerModel.js';
 import { worldToHex, hexKey } from '../sim/hex.js';
 
@@ -173,7 +175,7 @@ export function createEnemyView(scene, fx) {
           alive.add(e.id);
           let v = views.get(e.id);
           if (!v) {
-            const build = { skitterer: () => buildSkitterer(kit), shellback: buildShellback, mistwalker: buildMistwalker }[e.type];
+            const build = { skitterer: () => buildSkitterer(kit), shellback: buildShellback, mistwalker: buildMistwalker, broodmother: buildBroodmother, gull: buildGull }[e.type];
             v = { model: build ? build() : buildScuttler(kit), last: e, trailAt: 0, emberAt: 0 };
             const lift = -(v.model.float || 0) / v.model.scale + 0.04; // rings lie on the ground even under a floating enemy
             v.model.slow = new THREE.Mesh(kit.geos.slowRing, kit.mats.slowPool);
