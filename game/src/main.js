@@ -16,6 +16,7 @@ import { createTowerView } from './render/towerView.js';
 import { createProjectileView } from './render/projectileView.js';
 import { createFx } from './render/fx.js';
 import { createPlacement } from './render/placement.js';
+import { createSpawnMarker } from './render/spawnMarker.js';
 import { createUI } from './ui/screens.js';
 import { createHud } from './ui/hud.js';
 import { createTowerPanel } from './ui/towerPanel.js';
@@ -32,6 +33,7 @@ const towerView = createTowerView(stage.scene);
 const fx = createFx(stage.scene);
 const enemyView = createEnemyView(stage.scene, fx);
 const projectileView = createProjectileView(stage.scene, fx);
+const spawnMarker = createSpawnMarker(stage.scene);
 
 const previewLevel = buildLevel(1);
 
@@ -133,7 +135,7 @@ function handleEvents() {
   for (const ev of game.drainEvents()) {
     switch (ev.type) {
       case 'levelStart': clearActors(); flickerAt = -100; showWorld(); break;
-      case 'build': audio.play('build', game.time); break;
+      case 'build': audio.play(ev.towerType === 'lantern' ? 'lantern_lit' : 'build', game.time); break;
       case 'upgrade': audio.play('upgrade', game.time); fx.sparkle(ev.x, ev.y + 1.2, ev.z); break;
       case 'sell': audio.play('sell', game.time); fx.chips(ev.x, ev.y, ev.z); break;
       case 'refuse': audio.play('refuse', game.time); break;
@@ -143,6 +145,7 @@ function handleEvents() {
       case 'explode': audio.play('cannon_boom', game.time); fx.explosion(ev.x, ev.z, ev.radius); break;
       case 'kill': audio.play('enemy_death', game.time); fx.kill(ev.x, ev.z); break;
       case 'leak': audio.play('lighthouse_hit', game.time); ui.pulse(); flickerAt = anim; break;
+      case 'waveCalled': audio.play('wave_called', game.time); hud.floatBonus(ev.bonus); break;
       case 'waveStart': audio.play('wave_start', game.time); break;
       case 'waveCleared': audio.play('wave_clear', game.time); break;
       case 'victory': audio.play('victory', game.time); break;
@@ -205,6 +208,8 @@ function render() {
     const p = ctl.toScreen(tile.x, tile.height, tile.z);
     hud.reposition(p);
   }
+  const next = game.screen === 'playing' || game.screen === 'paused' ? game.nextWaveInfo() : null;
+  spawnMarker.update(anim, next && game.phase === 'breather' ? next.spawn : null);
   world.lighthouse.update(anim, anim - flickerAt);
   stage.renderer.render(stage.scene, stage.camera);
 }
@@ -243,6 +248,7 @@ window.addEventListener('keydown', (e) => {
     else if (e.code === 'Digit1') buildSelected('harpoon');
     else if (e.code === 'Digit2') buildSelected('cannon');
     else if (e.code === 'Digit3') buildSelected('bell');
+    else if (e.code === 'Digit4') buildSelected('lantern');
     else if (e.code === 'Escape') deselect();
   }
 });

@@ -22,8 +22,9 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
   const mk = (color, opacity) => new THREE.MeshBasicMaterial({
     color, transparent: true, opacity, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
   });
-  const mats = { select: mk(0xf3e9d2, 0.5), amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.9), disc: mk(0xffa23a, 0.06) };
+  const mats = { select: mk(0xf3e9d2, 0.5), amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.9), disc: mk(0xffa23a, 0.06), tealRing: mk(PAL.shallows, 0.95), tealDisc: mk(0x2e8c94, 0.1) };
   mats.disc.blending = THREE.AdditiveBlending; // warm glow that never darkens the island
+mats.tealDisc.blending = THREE.AdditiveBlending;
   const outline = new THREE.Mesh(outlineGeo, mats.amber);
   const ring = new THREE.Mesh(ringGeo, mats.ring);
   const disc = new THREE.Mesh(discGeo, mats.disc);
@@ -91,6 +92,12 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
   });
   dom.addEventListener('contextmenu', (e) => e.preventDefault());
 
+  /** The Tide Bell previews in teal so its ring never reads as the amber build cue. */
+  function tint(type) {
+    ring.material = type === 'bell' ? mats.tealRing : mats.ring;
+    disc.material = type === 'bell' ? mats.tealDisc : mats.disc;
+  }
+
   function place(hex, type, time, kind) {
     const tile = game.level.tileMap.get(hexKey(hex.q, hex.r));
     const y = tile.height + 0.05;
@@ -98,6 +105,7 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
     outline.position.set(tile.x, y, tile.z);
     outline.scale.setScalar(1 + (kind === 'ok' ? 0.02 * pulse : 0));
     if (kind === 'ok') {
+      tint(type);
       const r = hexRange(type, tile) * SQRT3;
       for (const o of [ring, disc]) { o.position.set(tile.x, y, tile.z); o.scale.set(r, 1, r); o.visible = true; }
       ring.scale.set(r, 1, r);
@@ -126,6 +134,7 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
         const tile = game.level.tileMap.get(hexKey(selTower.q, selTower.r));
         const y = tile.height + 0.05;
         const r = selTower.range * SQRT3;
+        tint(selTower.type);
         outline.material = mats.amber;
         outline.position.set(tile.x, y, tile.z);
         outline.scale.setScalar(1);

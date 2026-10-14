@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
 import { buildTideBell, BELL_HEIGHT } from './bellModel.js';
+import { buildLantern, LANTERN_HEIGHT } from './lanternModel.js';
+import { createLightPool, flickerPools } from './lightPool.js';
 
 const DROP_TIME = 0.5;
 const RECOIL_TIME = 0.35;
@@ -9,7 +11,7 @@ const TOWER_SCALE = 1.5;
 export const MUZZLE_HEIGHT = 1.62 * TOWER_SCALE;
 const CANNON_SCALE = 1.9;
 export const CANNON_MUZZLE_HEIGHT = 1.0 * CANNON_SCALE;
-export const muzzleHeight = (type) => (type === 'cannon' ? CANNON_MUZZLE_HEIGHT : type === 'bell' ? BELL_HEIGHT : MUZZLE_HEIGHT);
+export const muzzleHeight = (type) => (type === 'cannon' ? CANNON_MUZZLE_HEIGHT : type === 'bell' ? BELL_HEIGHT : type === 'lantern' ? LANTERN_HEIGHT : MUZZLE_HEIGHT);
 const easeOutBack = (t) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
 
 function makeKit() {
@@ -178,15 +180,18 @@ export function createTowerView(scene) {
     update(game, time) {
       const dt = Math.max(0, Math.min(0.5, time - lastTime));
       lastTime = time;
+      flickerPools(time);
       const k = 1 - Math.exp(-TURN_RATE * dt);
       const alive = new Set();
       for (const t of game.towers) {
         alive.add(t.id);
         let v = views.get(t.id);
         if (!v) {
-          v = { m: (t.type === 'cannon' ? buildCliffCannon : t.type === 'bell' ? buildTideBell : buildHarpoonPost)(kit), yaw: t.angle };
+          const build = { cannon: () => buildCliffCannon(kit), bell: buildTideBell, lantern: buildLantern }[t.type];
+          v = { m: build ? build() : buildHarpoonPost(kit), yaw: t.angle };
           v.m.root.position.set(t.x, t.y, t.z);
           scene.add(v.m.root);
+          if (t.type === 'lantern') { v.pool = createLightPool(game.level, t); scene.add(v.pool.mesh); }
           views.set(t.id, v);
         }
         v.m.tier2.visible = t.tier >= 2;
@@ -209,6 +214,12 @@ export function createTowerView(scene) {
           ring.scale.setScalar(0.5 + d * 1.1);
           ring.material.opacity = 0.55 * (1 - d);
         }
+        if (v.m.flame) {
+          // Lantern: the flame breathes; the light pool appears with the drop-in.
+          v.m.flame.scale.setScalar(1 + 0.18 * Math.sin(time * 9 + t.id) + 0.1 * Math.sin(time * 14.3));
+          v.pool.mesh.visible = age > 0.3;
+          continue;
+        }
         if (v.m.swing) {
           // Bell: a damped swing after each pulse, a faint sway when idle.
           const ps = game.time - (t.pulsedAt ?? -100);
@@ -228,13 +239,18 @@ export function createTowerView(scene) {
       for (const [id, v] of views) {
         if (alive.has(id)) continue;
         scene.remove(v.m.root);
+        if (v.pool) { scene.remove(v.pool.mesh); v.pool.mesh.dispose(); }
         v.m.dust.material.dispose();
         views.delete(id);
         fireAt.delete(id);
       }
     },
     clear() {
-      for (const v of views.values()) { scene.remove(v.m.root); v.m.dust.material.dispose(); }
+      for (const v of views.values()) {
+        scene.remove(v.m.root);
+        if (v.pool) { scene.remove(v.pool.mesh); v.pool.mesh.dispose(); }
+        v.m.dust.material.dispose();
+      }
       views.clear();
       fireAt.clear();
     },

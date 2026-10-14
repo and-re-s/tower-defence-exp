@@ -18,6 +18,7 @@ export function installTestApi(ctl) {
     sell: (id) => ctl.sell(id),
     setTargeting: (id, mode) => ctl.setTargeting(id, mode),
     grantSalvage: (n) => { ctl.game.salvage += Math.max(0, Math.floor(Number(n) || 0)); },
+    spawnEnemy: (type) => { const g = ctl.game; if (g.screen !== 'playing' && g.screen !== 'paused') return 0; g.spawnEnemy(type); ctl.handleEvents(); return g.enemies[g.enemies.length - 1].id; },
     callNextWave: () => ctl.callNextWave(),
     skipToWave: (n) => { const ok = ctl.game.skipToWave(n); ctl.handleEvents(); return ok; },
     win: () => { const ok = ctl.game.forceWin(); ctl.handleEvents(); return ok; },

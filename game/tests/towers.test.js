@@ -120,23 +120,25 @@ test('waves: skitterers are faster than scuttlers; calling early pays more the e
   assert.equal(g.snapshot().waveCount, 6);
   const types = new Set();
   for (const w of g.level.def.waves) for (const gr of w.groups) types.add(gr.type);
-  assert.deepEqual([...types].sort(), ['scuttler', 'shellback', 'skitterer']);
+  assert.deepEqual([...types].sort(), ['mistwalker', 'scuttler', 'shellback', 'skitterer']);
   void TICK;
 });
 
-function fixedLayout(n, seed = 1) {
+function fixedLayout(n, seed = 1, lanterns = 1) {
   const g = new Game();
   g.start({ level: 1, seed });
-  g.salvage = 50 * n;
+  g.salvage = 50 * n + 60 * lanterns;
   const spots = rankSpots(g);
   for (let i = 0; i < n; i++) g.build('harpoon', spots[i].t.q, spots[i].t.r);
+  // Mistwalkers (waves 5-6) need light: lanterns go on the next best spots.
+  for (let i = 0; i < lanterns; i++) g.build('lantern', spots[n + i].t.q, spots[n + i].t.r);
   for (let i = 0; i < 60 * 900 && g.screen === 'playing'; i++) g.tick();
   return g;
 }
 
 test('tuning: a mediocre layout built once loses, six posts squeak through, no cliff', () => {
   assert.equal(fixedLayout(3).screen, 'lost');
-  assert.equal(fixedLayout(5).screen, 'lost');
+  assert.equal(fixedLayout(5, 1, 0).screen, 'lost');
   const six = fixedLayout(6);
   assert.equal(six.screen, 'won');
   assert.ok(six.light >= 3 && six.light < 20, `six posts should end with a few Light, got ${six.light}`);

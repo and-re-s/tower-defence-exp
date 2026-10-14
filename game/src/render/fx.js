@@ -98,6 +98,8 @@ export function createFx(scene) {
     },
     /** One drip of Shallows tint behind a slowed enemy. */
     trail(x, z) { spawn('glow', x, 0.25, z, 0, 0.3, 0, 0.5, 1.1); },
+    /** A glowing ember lifting off an enemy that burns in lantern light. */
+    ember(x, y, z) { spawn('fire', x, y, z, 0, 0.9, 0, 0.5, 0.9); },
     kill(x, z) { burst('glow', x, 0.4, z, 12, 2.1, 1, Math.floor(z * 11)); },
     update(time) {
       const dt = Math.max(0, Math.min(0.5, time - lastTime));

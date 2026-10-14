@@ -5,6 +5,7 @@ import { ENEMY_TYPES } from './enemies.js';
 import { TICK } from './clock.js';
 import { BUILDABLE_TERRAIN, TOWER_TYPES, TIERS, MAX_TIER, TARGETING, SELL_REFUND, towerRange, towerStats } from './towers.js';
 import { updateProjectiles, updateTowers } from './combat.js';
+import { updateLanterns, MARK_BONUS } from './lantern.js';
 import { hexKey } from './hex.js';
 
 export { TICK };
@@ -77,6 +78,7 @@ export class Game {
     this.time += TICK;
     this.updateWaves();
     this.updateEnemies();
+    updateLanterns(this);
     updateTowers(this);
     updateProjectiles(this);
     if (this.light <= 0) {
@@ -112,6 +114,14 @@ export class Game {
         }
       }
     }
+  }
+
+  /** Composition of the wave that starts next, or null when every wave has started. Matches what `startWave` spawns. */
+  nextWaveInfo() {
+    if (!this.level || this.wave >= this.level.def.waves.length) return null;
+    const wave = this.level.def.waves[this.wave];
+    const p = this.level.pathPoints[0];
+    return { number: this.wave + 1, groups: wave.groups.map((g) => ({ type: g.type, count: g.count })), spawn: { x: round(p.x), z: round(p.z) } };
   }
 
   /** Skips the rest of the breather. Earlier calls pay a bigger bonus. Returns the bonus or -1 if not allowed. */
@@ -254,9 +264,14 @@ export class Game {
   /** Applies damage; a kill removes the enemy and pays its reward. */
   hitEnemy(e, damage, piercing = false) {
     const armor = piercing ? ENEMY_TYPES[e.type].armor || 0 : 0;
-    e.hp = Math.max(0, e.hp - damage * (1 - armor));
+    e.hp = Math.max(0, e.hp - damage * (1 - armor) * (e.marked ? 1 + MARK_BONUS : 1));
     this.events.push({ type: 'hit', id: e.id, x: e.x, z: e.z, armored: armor > 0 });
     if (e.hp > 0) return;
+    this.killEnemy(e);
+  }
+
+  /** Removes a dead enemy, pays its reward and announces the kill. */
+  killEnemy(e) {
     const reward = ENEMY_TYPES[e.type].reward;
     this.salvage += reward;
     this.kills += 1;
@@ -283,7 +298,7 @@ export class Game {
     const stats = ENEMY_TYPES[type];
     // Armored types scale at half rate: they are already tough against harpoons.
     const hp = Math.round(stats.hp * (stats.armor ? 1 + (this.hpScale - 1) * 0.5 : this.hpScale));
-    const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0, slow: 0, slowUntil: -1 };
+    const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0, slow: 0, slowUntil: -1, lit: false, marked: false, burn: 0, revealed: !stats.cloaked };
     pointOnPath(this.level, 0, e);
     this.enemies.push(e);
     this.events.push({ type: 'spawn', id: e.id, enemyType: type });
@@ -339,6 +354,7 @@ export class Game {
       waveCount: lvl.def.waves.length,
       phase: this.phase,
       breatherLeft: round(Math.max(0, this.breatherLeft), 2),
+      nextWave: this.nextWaveInfo(),
       lastLeakTime: round(this.lastLeakTime),
       path: lvl.path,
       lighthouse: { q: lvl.lighthouse.q, r: lvl.lighthouse.r, x: round(lvl.lighthouse.x), z: round(lvl.lighthouse.z) },
@@ -354,6 +370,7 @@ export class Game {
       projectiles: this.projectiles.map((p) => ({ id: p.id, kind: p.kind || 'bolt', towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
       enemies: this.enemies.map((e) => ({
         id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
+        cloaked: !!ENEMY_TYPES[e.type].cloaked, revealed: e.revealed, lit: e.lit, marked: e.marked,
         slowed: this.time < e.slowUntil, speedFactor: this.time < e.slowUntil ? round(1 - e.slow, 2) : 1,
       })),
     });

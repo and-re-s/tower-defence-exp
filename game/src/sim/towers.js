@@ -16,6 +16,12 @@ export const TOWER_TYPES = {
     name: 'Tide Bell', cost: 70, range: 2.5, rockBonus: 0, damage: 0, rate: 0.5, slow: 0.4, slowTime: 2, hotkey: 3,
     blurb: 'Slows enemies in an area',
   },
+  // Lights the hexes within `range`: enemies inside burn (`damage` per second), take +`mark` damage from every
+  // source, and cloaked enemies become visible to the other towers.
+  lantern: {
+    name: 'Lantern', cost: 60, range: 3, rockBonus: 0, damage: 4, rate: 1, mark: 0.15, hotkey: 4,
+    blurb: 'Light that burns and reveals',
+  },
 };
 
 // Upgrade tiers: cost to reach the tier, damage and fire-rate multipliers. Tier 3 is the maximum.
@@ -25,6 +31,8 @@ export const TIERS = {
   cannon: { 2: { cost: 80, damage: 1.5, rate: 1.1 }, 3: { cost: 120, damage: 2.2, rate: 1.25 } },
   // The bell deals no damage: tiers deepen the slow (40% -> 50% -> 60%).
   bell: { 2: { cost: 50, damage: 1, rate: 1, slow: 0.5 }, 3: { cost: 85, damage: 1, rate: 1, slow: 0.6 } },
+  // The lantern's damage is its burn per second (4 -> 6 -> 8).
+  lantern: { 2: { cost: 50, damage: 1.5, rate: 1 }, 3: { cost: 80, damage: 2, rate: 1 } },
 };
 export const TARGETING = ['first', 'strongest', 'closest'];
 export const SELL_REFUND = 0.7;
@@ -35,6 +43,7 @@ export function towerStats(type, tier) {
   const m = TIERS[type][tier] || { damage: 1, rate: 1 };
   const out = { damage: Math.round(base.damage * m.damage * 10) / 10, rate: Math.round(base.rate * m.rate * 1000) / 1000 };
   if (base.slow) out.slow = m.slow || base.slow;
+  if (base.mark) out.mark = base.mark;
   return out;
 }
 

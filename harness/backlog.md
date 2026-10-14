@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-044 · fix · todo · S — Round 08 minor bugs bundle
+### B-044 · fix · review · S — Round 08 minor bugs bundle
 Found: round-08 (minor)
 Repro/Done when:
 - at 640x420 and 800x500 the "Next wave" button is half hidden behind the tower bar (800x500: button y 403-436, bar y 416-492; round-08/small-start.jpg, 800x500.jpg); keep it fully visible and clickable above the bar at every viewport from 640x420 up (compare `getBoundingClientRect()` of `#next-wave` and `#tower-bar`: no overlap);
@@ -20,7 +20,7 @@ Repro/Done when:
 
 
 
-### B-011 · M1 · todo · M — Lantern and the Mistwalker
+### B-011 · M1 · review · M — Lantern and the Mistwalker
 Why: pillar "Hold the light": light as a weapon and visibility as a mechanic.
 Behavior: The Lantern (cost 60) is a glass-topped tower glowing amber that lights the hexes around it (radius 3) with a warm pool of light, burns enemies inside it (4 dps), and marks them to take +15% damage from all sources. The Mistwalker (a translucent floating jellyfish) is cloaked: towers can't target it unless it is inside a Lantern's light; while cloaked it is drawn as a faint shimmer.
 Done when:
@@ -29,7 +29,7 @@ Done when:
 - the lantern's light pool is visible on the ground in a screenshot, and a cloaked Mistwalker looks clearly different from a revealed one;
 - the tower bar shows four towers with hotkeys 1–4.
 
-### B-012 · M1 · todo · S — Next-wave preview and calling waves early
+### B-012 · M1 · review · S — Next-wave preview and calling waves early
 Why: informed decisions between waves; rewards confident players.
 Behavior: During the breather the HUD shows the next wave as small enemy icons with counts, and its spawn beach pulses on the map. "Next wave +N" calls it early; the bonus shrinks as the breather runs out.
 Done when:

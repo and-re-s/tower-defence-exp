@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
 import { buildShellback } from './shellbackModel.js';
+import { buildMistwalker, shimmerMistwalkers } from './mistwalkerModel.js';
 import { worldToHex, hexKey } from '../sim/hex.js';
 
 const MODEL_SCALE = 1.35;
@@ -16,6 +17,7 @@ function makeKit() {
     glow: new THREE.MeshStandardMaterial({ color: 0x0b3a33, emissive: PAL.brine, emissiveIntensity: 2.2, flatShading: true }),
     slowPool: new THREE.MeshBasicMaterial({ color: PAL.shallows, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }),
     pool: new THREE.MeshBasicMaterial({ color: PAL.brine, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false }),
+    markPool: new THREE.MeshBasicMaterial({ color: PAL.amber, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
   };
   const body = new THREE.IcosahedronGeometry(0.5, 0);
   body.scale(0.34, 0.14, 0.27);
@@ -148,7 +150,7 @@ export function createEnemyView(scene, fx) {
     const spd = v.model.spd;
     const emerge = easeOut(Math.min(1, age / EMERGE_TIME));
     const bob = Math.abs(Math.sin(time * spd * 0.5 + phase)) * 0.025;
-    g.position.set(e.x, heightAt(level, e.x, e.z) + bob - (1 - emerge) * 0.25, e.z);
+    g.position.set(e.x, heightAt(level, e.x, e.z) + bob - (1 - emerge) * 0.25 + (v.model.float || 0), e.z);
     g.rotation.y = e.heading;
     g.rotation.z = Math.sin(time * spd * 0.5 + phase) * 0.05;
     g.scale.setScalar(v.model.scale * (0.4 + 0.6 * emerge));
@@ -158,27 +160,41 @@ export function createEnemyView(scene, fx) {
       l.pivot.rotation.z = Math.max(0, w) * 0.4;
     }
     for (const c of v.model.claws) c.pivot.rotation.x = Math.sin(time * 3 + phase + c.s) * 0.12;
+    if (v.model.animate) v.model.animate(time, phase);
   }
 
   return {
     update(game, time) {
       const level = game.level;
+      shimmerMistwalkers(time);
       const alive = new Set();
       if (level) {
         for (const e of game.enemies) {
           alive.add(e.id);
           let v = views.get(e.id);
           if (!v) {
-            v = { model: e.type === 'skitterer' ? buildSkitterer(kit) : e.type === 'shellback' ? buildShellback() : buildScuttler(kit), last: e, trailAt: 0 };
+            const build = { skitterer: () => buildSkitterer(kit), shellback: buildShellback, mistwalker: buildMistwalker }[e.type];
+            v = { model: build ? build() : buildScuttler(kit), last: e, trailAt: 0, emberAt: 0 };
+            const lift = -(v.model.float || 0) / v.model.scale + 0.04; // rings lie on the ground even under a floating enemy
             v.model.slow = new THREE.Mesh(kit.geos.slowRing, kit.mats.slowPool);
-            v.model.slow.position.y = 0.04;
+            v.model.slow.position.y = lift;
             v.model.slow.visible = false;
-            v.model.group.add(v.model.slow);
+            v.model.mark = new THREE.Mesh(kit.geos.slowRing, kit.mats.markPool);
+            v.model.mark.position.y = lift + 0.01;
+            v.model.mark.visible = false;
+            v.model.group.add(v.model.slow, v.model.mark);
             scene.add(v.model.group);
             views.set(e.id, v);
           }
           v.last = { id: e.id, x: e.x, z: e.z, heading: e.heading };
           pose(v, e, level, time, game.time);
+          if (v.model.setRevealed) v.model.setRevealed(e.revealed);
+          // Enemies in lantern light wear an amber ring and shed embers while they burn.
+          v.model.mark.visible = e.lit;
+          if (e.lit) {
+            v.model.mark.scale.setScalar(1 + 0.08 * Math.sin(time * 5 + e.id));
+            if (fx && game.time - v.emberAt > 0.3) { v.emberAt = game.time; fx.ember(e.x, 0.5 + (v.model.float || 0) * 0.6, e.z); }
+          }
           // Slowed enemies wear a Shallows ring and leave a trail of teal drips.
           const slowed = game.time < e.slowUntil;
           v.model.slow.visible = slowed;

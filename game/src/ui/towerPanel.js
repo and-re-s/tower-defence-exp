@@ -67,13 +67,17 @@ export function createTowerPanel(ui, game, actions) {
       nameEl.textContent = TOWER_TYPES[t.type].name;
       tierEl.innerHTML = Array.from({ length: MAX_TIER }, (_, i) => `<i class="${i < t.tier ? 'on' : ''}"></i>`).join('');
       const bell = t.type === 'bell';
-      stats.innerHTML = bell
+      const lamp = t.type === 'lantern';
+      stats.innerHTML = lamp
+        ? `<div><span>Burn</span><b>${st.damage}/s</b></div><div><span>Marked</span><b>+${Math.round(st.mark * 100)}% dmg</b></div>
+        <div><span>Light radius</span><b>${t.range}</b></div>`
+        : bell
         ? `<div><span>Slow</span><b>${Math.round(st.slow * 100)}%</b></div><div><span>Pulse</span><b>${(1 / st.rate).toFixed(1)}s</b></div>
         <div><span>Range</span><b>${t.range}</b></div>`
         : `<div><span>Damage</span><b>${st.damage}</b></div><div><span>Rate</span><b>${st.rate}/s</b></div>
         <div><span>Range</span><b>${t.range}</b></div>`;
-      targetRow.classList.toggle('hidden', bell);
-      targetLabel.classList.toggle('hidden', bell);
+      targetRow.classList.toggle('hidden', bell || lamp);
+      targetLabel.classList.toggle('hidden', bell || lamp);
       for (const [m, b] of Object.entries(modeBtns)) b.classList.toggle('on', m === t.targeting);
       const cost = game.upgradeCost(t);
       if (!cost) {

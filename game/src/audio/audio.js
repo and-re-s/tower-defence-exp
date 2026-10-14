@@ -193,6 +193,17 @@ const SOUNDS = {
     tone(196, 1.2, { type: 'triangle', vol: 0.08, slideTo: 188 });
     noise(0.5, { freq: 500, vol: 0.05, kind: 'lowpass', delay: 0.05 });
   },
+  lantern_lit() {
+    // a soft whoomph of flame and a warm glass chime
+    noise(0.3, { freq: 600, vol: 0.12, kind: 'lowpass' });
+    tone(110, 0.3, { type: 'sine', vol: 0.16, slideTo: 220 });
+    [784, 1175].forEach((f, i) => tone(f, 0.6, { type: 'sine', vol: 0.07, delay: 0.1 + i * 0.09, attack: 0.01 }));
+  },
+  wave_called() {
+    pluck(784, 0.09);
+    pluck(1175, 0.09, 0.06);
+    pluck(1568, 0.07, 0.12);
+  },
   armor_hit() {
     const k = vary();
     tone(95 * k, 0.12, { type: 'square', vol: 0.09, slideTo: 55 }); // low crunch

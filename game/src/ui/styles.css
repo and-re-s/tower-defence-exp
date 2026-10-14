@@ -86,8 +86,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--deep);
 #mute svg { width: 24px; height: 24px; }
 
 /* next wave button and build menu */
-#next-wave { position: absolute; left: 50%; bottom: 96px; translate: -50% 0; font-size: 20px; padding: 10px 26px; }
-#next-wave:hover { translate: -50% 0; }
+#dock { position: absolute; left: 50%; bottom: 18px; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  pointer-events: none !important; }
+#dock > * { pointer-events: auto; }
+#next-wave { font-size: 20px; padding: 10px 26px; }
 #next-wave .bonus { font-family: var(--font-body); font-weight: 700; font-size: 16px; margin-left: 4px; }
 kbd { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding: 1px 6px; margin-left: 6px; border-radius: 4px;
   background: rgba(19, 41, 75, 0.18); }
@@ -107,11 +109,10 @@ kbd { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding:
 
 .btn:disabled { opacity: 0.5; filter: saturate(0.5); cursor: default; transform: none; box-shadow: 0 2px 0 #b97a1f; }
 .btn:disabled:hover { transform: none; filter: saturate(0.5); }
-#next-wave:disabled { translate: -50% 0; }
 #end .sub .of { font-family: var(--font-display); font-weight: 500; font-size: 18px; color: var(--sand); opacity: 0.75; }
 
 /* tower bar */
-#tower-bar { position: absolute; left: 50%; bottom: 18px; translate: -50% 0; display: flex; gap: 8px; padding: 8px; border-radius: 14px;
+#tower-bar { position: static; display: flex; gap: 8px; padding: 8px; border-radius: 14px;
   background: var(--deep-90); box-shadow: 0 4px 18px rgba(5, 12, 28, 0.5); pointer-events: auto; }
 .bar-slot { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 0; border-radius: 10px; cursor: pointer;
   color: var(--sand); background: rgba(227, 194, 122, 0.1); box-shadow: inset 0 0 0 2px transparent;
@@ -158,13 +159,40 @@ kbd { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding:
 #tower-panel .tp-up:disabled { background: rgba(227, 194, 122, 0.1); color: var(--sand); opacity: 0.6; cursor: default; transform: none; filter: none; justify-content: center; }
 #tower-panel .tp-sell .tp-cost { color: var(--amber); }
 
+/* next-wave preview chip and the floating early-call bonus */
+#preview-chip .label { font-family: var(--font-display); font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+.preview-icons { display: flex; gap: 8px; }
+.preview-icons .pv { display: flex; align-items: center; gap: 2px; }
+.preview-icons svg { width: 24px; height: 24px; }
+.preview-icons b { font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--amber); }
+.float-bonus { position: fixed; translate: -50% 0; pointer-events: none !important; font-family: var(--font-display); font-weight: 600; font-size: 26px;
+  color: var(--amber); text-shadow: 0 2px 6px rgba(5, 12, 28, 0.8); animation: floatup 1.1s ease-out forwards; }
+@keyframes floatup { 0% { opacity: 0; transform: translateY(-6px) scale(0.8); } 15% { opacity: 1; transform: translateY(0) scale(1.15); }
+  100% { opacity: 0; transform: translateY(34px) scale(1); } }
+.build-opt svg { width: 26px; height: 26px; flex: none; margin: -3px 0; }
+
+/* narrow viewports: the tower bar keeps icons, cost and hotkey only */
+@media (max-width: 760px) {
+  .bar-slot .slot-name { display: none; }
+  .bar-slot { padding: 4px 8px 4px 4px; }
+}
+
 /* short viewports: compact build menu and tower bar */
 @media (max-height: 560px) {
   #build-menu { min-width: 170px; padding: 6px; }
   #build-menu .menu-title { margin-bottom: 4px; }
   .build-opt { padding: 5px 10px; font-size: 15px; }
   .build-opt + .build-opt { margin-top: 4px; }
-  #tower-bar { bottom: 8px; padding: 4px; }
+  #dock { bottom: 8px; gap: 6px; }
+  #tower-bar { padding: 4px; }
   .bar-slot svg { width: 28px; height: 28px; }
-  #next-wave { bottom: 64px; font-size: 16px; padding: 6px 18px; }
+  #next-wave { font-size: 16px; padding: 6px 18px; }
+  /* the build menu becomes a compact row of icons and costs */
+  #build-menu { display: flex; gap: 4px; min-width: 0; padding: 4px; }
+  #build-menu .menu-title, #build-menu .opt-name, #build-menu kbd { display: none; }
+  #build-menu .build-opt { width: auto; margin: 0 !important; padding: 5px 8px; gap: 6px; }
+  #build-menu .build-opt svg { width: 24px; height: 24px; margin: 0; }
+  #build-menu .build-opt .opt-cost { font-size: 15px; }
+  #preview-chip { padding: 4px 8px; }
+  #preview-chip .label { display: none; }
 }

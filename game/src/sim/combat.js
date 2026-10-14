@@ -24,6 +24,7 @@ export function updateTowers(game) {
   }
   for (const t of game.towers) {
     if (t.type === 'bell') { updateBell(game, t); continue; }
+    if (t.type === 'lantern') continue; // lights via lantern.js
     const stats = { ...TOWER_TYPES[t.type], ...towerStats(t.type, t.tier) };
     t.cooldown = Math.max(0, t.cooldown - TICK);
     const reach = hexesToWorld(t.range);
@@ -31,6 +32,7 @@ export function updateTowers(game) {
     let best = null;
     let fallback = { e: null, score: -Infinity };
     for (const e of game.enemies) {
+      if (!e.revealed) continue; // cloaked and outside lantern light
       const dx = e.x - t.x;
       const dz = e.z - t.z;
       const d2 = dx * dx + dz * dz;

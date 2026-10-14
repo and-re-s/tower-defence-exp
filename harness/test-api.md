@@ -18,6 +18,7 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 | `sell(id)` | `__game.sell(1)` | removes the tower, refunds 70% of `spent` (floor); returns `{ok, refund}`; logs `sell` |
 | `setTargeting(id, mode)` | `__game.setTargeting(1,'strongest')` | `first` (default) / `strongest` (highest hp) / `closest`; returns bool |
 | `grantSalvage(n)` | `__game.grantSalvage(100)` | adds salvage |
+| `spawnEnemy(type)` | `__game.spawnEnemy('mistwalker')` | puts one enemy of that type at the spawn beach right now (playing/paused); returns its id, 0 outside a level |
 | `callNextWave()` | `__game.callNextWave()` | during a breather: starts the next wave now; returns the early bonus (added to salvage) or -1 |
 | `skipToWave(n)` | `__game.skipToWave(3)` | from `playing`/`paused`: clears enemies and projectiles and starts wave n (1..waveCount) now; returns true/false (false outside 1..waveCount, nothing changes) |
 | `win()` / `lose()` | `__game.win()` | forces `screen: 'won'` / `'lost'` (lose sets Light 0); returns true/false; false outside a level |
@@ -26,11 +27,11 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 ## `state()` fields
 - `screen` menu | playing | paused | won | lost; `level`, `levelName`, `seed`, `time` (game s), `timeScale`, `fps`.
 - `light`, `lightMax` (20), `salvage` (150 at start), `wave` (waves started), `waveCount`,
-  `phase` (`breather` | `wave` | `done`), `breatherLeft` (s), `lastLeakTime`.
+  `phase` (`breather` | `wave` | `done`), `breatherLeft` (s), `lastLeakTime`, `nextWave` (`{number, groups: [{type, count}], spawn: {x, z}}` of the wave that starts next, `null` after the last wave started; the groups are exactly what spawns).
 - `path`: `[{q,r}]` hexes from the beach hex to the lighthouse hex (last). `lighthouse`: `{q,r,x,z}`.
 - `terrainCounts`: tiles per terrain (sand, grass, rock, path, shallows); `heights`: distinct tile heights.
 - `kills`; `tiles`: `[{q, r, terrain, height, tower}]` (tower = tower id or 0); `towers`: `[{id, type, q, r, tier, range (hexes, +1 on rock), terrain, targetId, targeting, damage, rate, upgradeCost (0 at max), sellValue, spent, angleDeg}]`; `projectiles`: `[{id, kind ('bolt'|'shell'), towerId, targetId, x, z}]`.
-- `enemies`: `[{id, type (scuttler|skitterer|shellback), hp, maxHp, x, z, progress, slowed, speedFactor}]` world position, 0..1 progress along the path; `slowed` true for 2 s after a Tide Bell pulse (`speedFactor` 0.6 = moving at 60%). Towers of type `bell` have `slow` (0.4/0.5/0.6) and damage 0; `build('bell', q, r)` costs 70. Shellbacks spawn in level 1 waves 3-6 (`skipToWave(6)`); audioLog ids `bell_ring`, `armor_hit`. `camera.yawDeg` is 0..359.
+- `enemies`: `[{id, type (scuttler|skitterer|shellback|mistwalker), hp, maxHp, x, z, progress, cloaked, revealed, lit, marked, slowed, speedFactor}]` world position, 0..1 progress along the path; `slowed` true for 2 s after a Tide Bell pulse (`speedFactor` 0.6 = moving at 60%). Towers of type `bell` have `slow` (0.4/0.5/0.6) and damage 0; `build('bell', q, r)` costs 70. Shellbacks spawn in level 1 waves 3-6 (`skipToWave(6)`); audioLog ids `bell_ring`, `armor_hit`. `camera.yawDeg` is 0..359.
 - `camera`: `{yawDeg, zoom (0 close .. 1 full island), pan:[x,z]}` (targets, not eased values); `muted`; `audio`: `{muted, running}` (running = AudioContext unlocked by a gesture).
 
 Notes: tile centers are `x = 1.5q`, `z = sqrt(3)(r + q/2)`; tile top heights are in `heights`.
@@ -46,3 +47,9 @@ Sound: ambience (two surf layers with slow swells, faint gulls) starts on the fi
 Tower types for `build()`: `harpoon` (50), `cannon` (90, range 4 / 5 on rock, min range 1.5, blast 1.2 hexes, ground only).
 
 Selecting a tower: click it (its body or its hex) opens `#tower-panel` (`.tp-up` upgrade, `.tp-sell` sell, `.tp-target button[data-mode]`); Esc / right click / click elsewhere closes it. Clicking a tower never opens the build menu. `start()` resets the armed tower type to harpoon. Sound ids `upgrade`, `sell` added.
+
+## Lantern and Mistwalker (B-011), next-wave preview (B-012)
+- `build('lantern', q, r)` costs 60 (key 4); `towers[]` entry has `damage` = burn per second (4/6/8), `mark` 0.15, `range` 3 = light radius in hexes. Enemies within the radius have `lit` and `marked` true: they burn, take +15% from every source (harpoon, shell), and are `revealed`.
+- Mistwalker (`cloaked: true`, 60 hp, waves 5-6 of level 1, or `spawnEnemy('mistwalker')`): `revealed` is false outside lantern light and no harpoon or cannon targets it (`towers[].targetId` stays 0); inside light `revealed` is true. Example: build a harpoon and a lantern, `spawnEnemy('mistwalker')`, `step(n)`, read `enemies[0].revealed`.
+- HUD: `#preview-chip` lists the next wave's enemies with counts during the breather; the spawn beach shows pulsing amber rings and a faint column. `callNextWave()` bonus = 1.5 x seconds left, also shown as a floating `.float-bonus` "+N" under the salvage chip; audioLog id `wave_called`. Lantern build plays `lantern_lit`.
+- Layout: `#next-wave` and `#tower-bar` live in `#dock` (flex column), so they never overlap; under 560 px height the build menu is a compact icon row beside the clicked hex.
