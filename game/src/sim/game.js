@@ -3,7 +3,7 @@ import { createRng } from './rng.js';
 import { buildLevel, pointOnPath } from './levels.js';
 import { ENEMY_TYPES } from './enemies.js';
 import { TICK } from './clock.js';
-import { BUILDABLE_TERRAIN, TOWER_TYPES, towerRange } from './towers.js';
+import { BUILDABLE_TERRAIN, TOWER_TYPES, TIERS, MAX_TIER, TARGETING, SELL_REFUND, towerRange, towerStats } from './towers.js';
 import { updateProjectiles, updateTowers } from './combat.js';
 import { hexKey } from './hex.js';
 
@@ -183,12 +183,67 @@ export class Game {
     this.salvage -= stats.cost;
     const tower = {
       id: this.nextTowerId++, type, q, r, x: tile.x, z: tile.z, y: tile.height, terrain: tile.terrain, tier: 1,
-      range: towerRange(type, tile.terrain), cooldown: 0.4, targetId: 0, angle: 0, spent: stats.cost, born: this.time,
+      range: towerRange(type, tile.terrain), cooldown: 0.4, targetId: 0, angle: 0, spent: stats.cost, born: this.time, targeting: 'first', upgradedAt: -100,
     };
     this.towers.push(tower);
     this.towerAt.set(hexKey(q, r), tower);
     this.events.push({ type: 'build', towerId: tower.id, towerType: type, q, r });
     return { ok: true, reason: null, id: tower.id };
+  }
+
+  towerById(id) {
+    for (const t of this.towers) if (t.id === id) return t;
+    return null;
+  }
+
+  towerStats(t) {
+    return towerStats(t.type, t.tier);
+  }
+
+  /** Cost of the next upgrade, or 0 at the maximum tier. */
+  upgradeCost(t) {
+    return t.tier >= MAX_TIER ? 0 : TIERS[t.type][t.tier + 1].cost;
+  }
+
+  /** Refund for selling this tower: 70% of everything spent on it. */
+  sellValue(t) {
+    return Math.floor(t.spent * SELL_REFUND);
+  }
+
+  upgrade(id) {
+    const t = this.towerById(id);
+    if (!t || (this.screen !== 'playing' && this.screen !== 'paused')) return { ok: false, reason: 'invalid' };
+    const reason = t.tier >= MAX_TIER ? 'max' : this.salvage < this.upgradeCost(t) ? 'salvage' : null;
+    if (reason) {
+      this.events.push({ type: 'refuse', reason, q: t.q, r: t.r });
+      return { ok: false, reason };
+    }
+    const cost = this.upgradeCost(t);
+    this.salvage -= cost;
+    t.spent += cost;
+    t.tier += 1;
+    t.upgradedAt = this.time;
+    this.events.push({ type: 'upgrade', towerId: id, tier: t.tier, x: t.x, y: t.y, z: t.z });
+    return { ok: true, reason: null, tier: t.tier };
+  }
+
+  sell(id) {
+    const t = this.towerById(id);
+    if (!t || (this.screen !== 'playing' && this.screen !== 'paused')) return { ok: false, reason: 'invalid' };
+    const refund = this.sellValue(t);
+    this.salvage += refund;
+    this.towers.splice(this.towers.indexOf(t), 1);
+    this.towerAt.delete(hexKey(t.q, t.r));
+    this.projectiles = this.projectiles.filter((p) => p.towerId !== id || p.kind === 'shell');
+    this.events.push({ type: 'sell', towerId: id, refund, x: t.x, y: t.y, z: t.z });
+    return { ok: true, reason: null, refund };
+  }
+
+  setTargeting(id, mode) {
+    const t = this.towerById(id);
+    if (!t || !TARGETING.includes(mode)) return false;
+    t.targeting = mode;
+    return true;
   }
 
   enemyById(id) {
@@ -290,6 +345,7 @@ export class Game {
       tiles: lvl.tiles.map((t) => ({ q: t.q, r: t.r, terrain: t.terrain, height: t.height, tower: this.towerAt.get(hexKey(t.q, t.r))?.id ?? 0 })),
       towers: this.towers.map((t) => ({
         id: t.id, type: t.type, q: t.q, r: t.r, tier: t.tier, range: t.range, terrain: t.terrain, targetId: t.targetId,
+        targeting: t.targeting, ...towerStats(t.type, t.tier), upgradeCost: this.upgradeCost(t), sellValue: this.sellValue(t), spent: t.spent,
         angleDeg: round((t.angle * 180) / Math.PI, 1),
       })),
       projectiles: this.projectiles.map((p) => ({ id: p.id, kind: p.kind || 'bolt', towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),

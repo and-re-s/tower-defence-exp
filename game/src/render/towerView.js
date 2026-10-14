@@ -21,6 +21,7 @@ function makeKit() {
     iron: new THREE.MeshStandardMaterial({ color: PAL.whitewash, flatShading: true, roughness: 0.5 }),
     cannon: new THREE.MeshStandardMaterial({ color: 0x56607a, flatShading: true, roughness: 0.55, metalness: 0.35 }),
     bore: new THREE.MeshBasicMaterial({ color: 0x07080c }),
+    gold: new THREE.MeshStandardMaterial({ color: PAL.amber, emissive: PAL.amber, emissiveIntensity: 0.5, flatShading: true, roughness: 0.4, metalness: 0.4 }),
     dust: new THREE.MeshBasicMaterial({ color: PAL.sand, transparent: true, depthWrite: false, opacity: 0 }),
   };
   const geos = {
@@ -44,7 +45,14 @@ function makeKit() {
     bore: new THREE.CylinderGeometry(0.13, 0.13, 0.04, 8),
     ball: new THREE.SphereGeometry(0.1, 6, 5),
     trunnion: new THREE.BoxGeometry(0.7, 0.14, 0.14),
+    collar: new THREE.CylinderGeometry(0.235, 0.235, 0.09, 6),
+    mast: new THREE.CylinderGeometry(0.03, 0.03, 0.5, 5),
+    orb: new THREE.IcosahedronGeometry(0.09, 1),
+    wing: new THREE.BoxGeometry(0.04, 0.3, 0.36),
+    hoop: new THREE.TorusGeometry(0.4, 0.045, 5, 12),
+    spike: new THREE.ConeGeometry(0.07, 0.3, 5),
   };
+  geos.hoop.rotateX(Math.PI / 2);
   geos.barrel.rotateX(Math.PI / 2);
   geos.band.rotateX(Math.PI / 2);
   geos.muzzle.rotateX(Math.PI / 2);
@@ -92,11 +100,22 @@ function buildHarpoonPost(kit) {
   add(bolt, g.tip, m.iron, 0, 0.08, 0.46);
   recoil.add(bolt);
   add(recoil, g.coil, m.rope, 0, 0.1, -0.24).rotation.x = Math.PI / 2;
+  // Tier extras: gold collars and a taller mast with a glowing orb (tier 3 adds wings).
+  const tier2 = new THREE.Group();
+  add(tier2, g.collar, m.gold, 0, 0.9, 0);
+  add(tier2, g.collar, m.gold, 0, 0.2, 0).scale.set(1.25, 1, 1.25);
+  body.add(tier2);
+  const tier3 = new THREE.Group();
+  add(tier3, g.mast, m.woodDark, 0.22, 1.85, 0);
+  add(tier3, g.orb, m.gold, 0.22, 2.15, 0);
+  add(tier3, g.wing, m.flag, 0.2, 1.62, -0.05);
+  add(tier3, g.wing, m.flag, -0.2, 1.62, -0.05);
+  body.add(tier3);
   const dust = new THREE.Mesh(g.dust, m.dust.clone());
   dust.position.y = 0.06;
   dust.visible = false;
   root.add(dust);
-  return { root, body, head, recoil, bolt, dust };
+  return { root, body, head, recoil, bolt, dust, tier2, tier3, baseScale: TOWER_SCALE };
 }
 
 function buildCliffCannon(kit) {
@@ -129,11 +148,21 @@ function buildCliffCannon(kit) {
   add(recoil, g.band, m.flag, 0, 0, 0.05);
   add(recoil, g.muzzle, m.cannon, 0, 0, 0.8);
   add(recoil, g.bore, m.bore, 0, 0, 0.91);
+  // Tier extras: gold hoop around the base, then spikes on the drum (tier 3).
+  const tier2 = new THREE.Group();
+  add(tier2, g.hoop, m.gold, 0, 0.42, 0).scale.set(1.1, 1.1, 1.1);
+  body.add(tier2);
+  const tier3 = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const sp = add(tier3, g.spike, m.gold, Math.cos(i * 1.0472) * 0.4, 0.74, Math.sin(i * 1.0472) * 0.4);
+    sp.rotation.set(Math.sin(i * 1.0472) * 0.5, 0, -Math.cos(i * 1.0472) * 0.5);
+  }
+  body.add(tier3);
   const dust = new THREE.Mesh(g.dust, m.dust.clone());
   dust.position.y = 0.06;
   dust.visible = false;
   root.add(dust);
-  return { root, body, head, recoil, bolt: new THREE.Object3D(), dust };
+  return { root, body, head, recoil, bolt: new THREE.Object3D(), dust, tier2, tier3, baseScale: CANNON_SCALE };
 }
 
 /** One model per tower; the build bounce, the turning and the recoil run on the game clock. */
@@ -159,6 +188,12 @@ export function createTowerView(scene) {
           scene.add(v.m.root);
           views.set(t.id, v);
         }
+        v.m.tier2.visible = t.tier >= 2;
+        v.m.tier3.visible = t.tier >= 3;
+        // Grow with each tier, with a short overshoot after an upgrade.
+        const up = game.time - t.upgradedAt;
+        const pop = up >= 0 && up < 0.5 ? Math.sin((up / 0.5) * Math.PI) * 0.14 * (1 - up / 0.5) : 0;
+        v.m.root.scale.setScalar(v.m.baseScale * (1 + (t.tier - 1) * 0.1 + pop));
         const age = game.time - t.born;
         const drop = Math.min(1, age / DROP_TIME);
         const e = drop >= 1 ? 1 : easeOutBack(drop);

@@ -126,3 +126,34 @@ kbd { font-family: var(--font-body); font-size: 12px; font-weight: 700; padding:
 .bar-slot.poor .slot-cost { color: var(--coral); }
 .bar-slot kbd { margin-left: 2px; background: rgba(227, 194, 122, 0.2); color: var(--sand); }
 .build-opt + .build-opt { margin-top: 6px; }
+
+/* tower panel */
+#tower-panel { position: absolute; left: 0; top: 0; width: 214px; box-sizing: border-box; padding: 12px; border-radius: 12px; pointer-events: auto;
+  background: var(--deep-90); color: var(--sand); box-shadow: 0 6px 24px rgba(5, 12, 28, 0.55); animation: rise 0.18s ease-out;
+  font-family: var(--font-body); }
+#tower-panel .tp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+#tower-panel .tp-tier { display: flex; gap: 4px; }
+#tower-panel .tp-tier i { width: 10px; height: 10px; border-radius: 50%; background: rgba(227, 194, 122, 0.22); transform: rotate(45deg); border-radius: 2px; }
+#tower-panel .tp-tier i.on { background: var(--amber); box-shadow: 0 0 6px rgba(255, 178, 62, 0.7); }
+#tower-panel .tp-stats { display: grid; gap: 3px; margin-bottom: 10px; font-size: 14px; }
+#tower-panel .tp-stats div { display: flex; justify-content: space-between; }
+#tower-panel .tp-stats span { opacity: 0.7; }
+#tower-panel .tp-stats b { color: #fff; }
+#tower-panel .tp-label { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.7; margin-bottom: 5px; }
+#tower-panel .tp-target { display: flex; gap: 4px; margin-bottom: 10px; }
+#tower-panel .tp-target button { flex: 1; padding: 6px 2px; border: 0; border-radius: 7px; cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 12px;
+  color: var(--sand); background: rgba(227, 194, 122, 0.12); transition: background 0.12s ease, transform 0.12s ease; }
+#tower-panel .tp-target button:hover { background: rgba(227, 194, 122, 0.24); }
+#tower-panel .tp-target button:active { transform: translateY(1px); }
+#tower-panel .tp-target button.on { background: var(--amber); color: var(--deep); }
+#tower-panel .tp-up, #tower-panel .tp-sell { display: flex; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 9px 12px; border: 0; border-radius: 8px;
+  cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 16px; transition: transform 0.12s ease, filter 0.12s ease; }
+#tower-panel .tp-up { background: var(--amber); color: var(--deep); margin-bottom: 6px; }
+#tower-panel .tp-sell { background: rgba(255, 107, 91, 0.18); color: var(--sand); }
+#tower-panel .tp-up:hover, #tower-panel .tp-sell:hover { filter: brightness(1.12); transform: translateY(-1px); }
+#tower-panel .tp-up:active, #tower-panel .tp-sell:active { transform: translateY(1px); }
+#tower-panel .tp-up.poor { background: rgba(227, 194, 122, 0.16); color: var(--sand); }
+#tower-panel .tp-up.poor .tp-cost { color: var(--coral); }
+#tower-panel .tp-up:disabled { background: rgba(227, 194, 122, 0.1); color: var(--sand); opacity: 0.6; cursor: default; transform: none; filter: none; justify-content: center; }
+#tower-panel .tp-sell .tp-cost { color: var(--amber); }

@@ -148,6 +148,19 @@ const SOUNDS = {
     noise(0.35, { freq: 4500, kind: 'highpass', vol: 0.05, delay: 0.1 }); // sand hiss
     tone(520, 0.1, { type: 'triangle', vol: 0.08, delay: 0.1 });
   },
+  upgrade() {
+    // rising kalimba triad plus a creak of timber
+    [523, 659, 784, 1047].forEach((f, i) => { tone(f, 0.32, { type: 'sine', vol: 0.12, delay: i * 0.07, attack: 0.003 }); tone(f * 4.1, 0.07, { type: 'sine', vol: 0.03, delay: i * 0.07 }); });
+    tone(120, 0.18, { type: 'triangle', vol: 0.16, slideTo: 170 });
+    noise(0.12, { freq: 900, vol: 0.1 });
+  },
+  sell() {
+    // coins and a falling sand slump
+    tone(880, 0.1, { type: 'triangle', vol: 0.1, slideTo: 660 });
+    tone(1320, 0.12, { type: 'sine', vol: 0.08, delay: 0.07 });
+    tone(110, 0.3, { type: 'sine', vol: 0.2, slideTo: 50, delay: 0.03 });
+    noise(0.4, { freq: 3000, kind: 'highpass', vol: 0.06 });
+  },
   refuse() {
     // lower woody thunk
     tone(150, 0.14, { type: 'triangle', vol: 0.2, slideTo: 80 });

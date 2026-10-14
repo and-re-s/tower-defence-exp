@@ -39,3 +39,11 @@ Decisions: shells are aimed at the enemy's predicted path position (not homing) 
 Known issues: level 1 tuning untouched (cannons make it easier; the bot tests only use harpoons); no cannon-specific balance test; salvage sink improves but upgrades (B-009) still missing.
 Tried and reverted: nothing.
 How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('cannon', q, r)` (rock tile = range 5 in `state().towers`), `callNextWave()`, `step(n)` until `projectiles` has kind `shell`; `audioLog()` shows `cannon_fire`, `cannon_boom`. Click a hex then press 2 or click the cannon option. npm test has cluster/min-range/rock-range tests.
+
+## Round 06
+Items: B-041 -> review, B-009 -> review (committed together: the picking and selection code is interleaved)
+Changes: clicking a tower (body or hex) selects it: range ring plus a panel beside it with Damage/Rate/Range, tier pips, targeting First/Strongest/Closest, Upgrade (2 tiers, gold collars/hoop then mast+orb or spikes, tower grows, amber sparkle, rising chime) and Sell for 70% (chips + sound). Occupied hexes no longer open "Build here". Armed type resets to Harpoon on start. Cannon blast now has a flash dome, expanding ring (0.45 s), more fire/smoke/debris.
+Decisions: upgrade costs harpoon 60/90, cannon 80/120 (salvage sink); tiers raise damage and rate, not range. Tower pick = screen-space distance to the tower's base-top segment (34 px), checked before the ground raycast. Sell removes the tower instantly (sink animation is B-027).
+Known issues: panel overlaps the beam wedge visually; no keyboard shortcuts for upgrade; level 1 not retuned for upgrades (bot tests unchanged, still pass).
+Tried and reverted: nothing.
+How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('cannon',0,-1)`, click `toScreen(0,2.2,-1.732)` -> `#tower-panel` opens; `upgrade(1)`, `setTargeting(1,'strongest')`, `sell(1)` (`state().towers` has tier/damage/sellValue). npm test has 4 new tests.

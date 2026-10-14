@@ -1,10 +1,17 @@
 import { TICK } from './clock.js';
-import { hexesToWorld, TOWER_TYPES } from './towers.js';
+import { hexesToWorld, TOWER_TYPES, towerStats } from './towers.js';
 import { pointOnPath } from './levels.js';
 import { ENEMY_TYPES } from './enemies.js';
 import { SQRT3 } from './hex.js';
 
 const HIT_RADIUS = 0.15;
+
+/** Higher score = preferred target: first = furthest along the path, strongest = most hp, closest = nearest. */
+function priority(mode, e, d2) {
+  if (mode === 'strongest') return e.hp * 1000 + e.s;
+  if (mode === 'closest') return -d2;
+  return e.s;
+}
 
 /** Towers pick the enemy furthest along the path and launch projectiles; projectiles home in and hurt. */
 export function updateTowers(game) {
@@ -16,21 +23,23 @@ export function updateTowers(game) {
     if (e) e.incoming += p.damage;
   }
   for (const t of game.towers) {
-    const stats = TOWER_TYPES[t.type];
+    const stats = { ...TOWER_TYPES[t.type], ...towerStats(t.type, t.tier) };
     t.cooldown = Math.max(0, t.cooldown - TICK);
     const reach = hexesToWorld(t.range);
     const minReach = stats.minRange ? hexesToWorld(stats.minRange) : 0;
     let best = null;
-    let fallback = null;
+    let fallback = { e: null, score: -Infinity };
     for (const e of game.enemies) {
       const dx = e.x - t.x;
       const dz = e.z - t.z;
       const d2 = dx * dx + dz * dz;
       if (d2 > reach * reach || d2 < minReach * minReach) continue;
-      if (!fallback || e.s > fallback.s) fallback = e;
-      if (e.hp - e.incoming > 0 && (!best || e.s > best.s)) best = e;
+      const score = priority(t.targeting, e, d2);
+      if (!fallback || score > fallback.score) fallback = { e, score };
+      if (e.hp - e.incoming > 0 && (!best || score > best.score)) best = { e, score };
     }
-    const target = best || fallback;
+    best = best && best.e;
+    const target = best || fallback.e;
     t.targetId = target ? target.id : 0;
     if (!target) continue;
     t.angle = Math.atan2(target.x - t.x, target.z - t.z);

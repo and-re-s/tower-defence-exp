@@ -14,6 +14,9 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 | `errors()` | `__game.errors()` | `[{kind, message, at}]` window errors and unhandled rejections |
 | `audioLog()` | `__game.audioLog()` | last 50 `{id, time}` (time = game seconds). Logged even when muted |
 | `build(type, q, r)` | `__game.build('harpoon', 1, -1)` | same rules as the player (terrain, occupancy, cost); returns `{ok, reason}`; reasons: `path`, `terrain`, `lighthouse`, `occupied`, `salvage`, `invalid`. Works while paused. A refusal logs `refuse` in `audioLog()` |
+| `upgrade(id)` | `__game.upgrade(1)` | tier +1 (max 3); returns `{ok, reason}` (`salvage`, `max`, `invalid`); logs `upgrade` (or `refuse`) in `audioLog()`. Costs: harpoon 60/90, cannon 80/120; damage x1.5/x2.1 (cannon x2.2), rate x1.1/x1.25 |
+| `sell(id)` | `__game.sell(1)` | removes the tower, refunds 70% of `spent` (floor); returns `{ok, refund}`; logs `sell` |
+| `setTargeting(id, mode)` | `__game.setTargeting(1,'strongest')` | `first` (default) / `strongest` (highest hp) / `closest`; returns bool |
 | `grantSalvage(n)` | `__game.grantSalvage(100)` | adds salvage |
 | `callNextWave()` | `__game.callNextWave()` | during a breather: starts the next wave now; returns the early bonus (added to salvage) or -1 |
 | `skipToWave(n)` | `__game.skipToWave(3)` | from `playing`/`paused`: clears enemies and projectiles and starts wave n (1..waveCount) now; returns true/false (false outside 1..waveCount, nothing changes) |
@@ -26,7 +29,7 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
   `phase` (`breather` | `wave` | `done`), `breatherLeft` (s), `lastLeakTime`.
 - `path`: `[{q,r}]` hexes from the beach hex to the lighthouse hex (last). `lighthouse`: `{q,r,x,z}`.
 - `terrainCounts`: tiles per terrain (sand, grass, rock, path, shallows); `heights`: distinct tile heights.
-- `kills`; `tiles`: `[{q, r, terrain, height, tower}]` (tower = tower id or 0); `towers`: `[{id, type, q, r, tier, range (hexes, +1 on rock), terrain, targetId, angleDeg}]`; `projectiles`: `[{id, kind ('bolt'|'shell'), towerId, targetId, x, z}]`.
+- `kills`; `tiles`: `[{q, r, terrain, height, tower}]` (tower = tower id or 0); `towers`: `[{id, type, q, r, tier, range (hexes, +1 on rock), terrain, targetId, targeting, damage, rate, upgradeCost (0 at max), sellValue, spent, angleDeg}]`; `projectiles`: `[{id, kind ('bolt'|'shell'), towerId, targetId, x, z}]`.
 - `enemies`: `[{id, type (scuttler|skitterer), hp, maxHp, x, z, progress}]` world position and 0..1 progress along the path.
 - `camera`: `{yawDeg, zoom (0 close .. 1 full island), pan:[x,z]}` (targets, not eased values); `muted`; `audio`: `{muted, running}` (running = AudioContext unlocked by a gesture).
 
@@ -41,3 +44,5 @@ Lamp hit sound id: `lighthouse_hit`. Other ids so far: `cannon_fire`, `cannon_bo
 Sound: ambience (two surf layers with slow swells, faint gulls) starts on the first gesture; mute via button or M is persisted in localStorage (`tidewatch.muted`) and silences everything; ids are logged in `audioLog()` even when muted.
 
 Tower types for `build()`: `harpoon` (50), `cannon` (90, range 4 / 5 on rock, min range 1.5, blast 1.2 hexes, ground only).
+
+Selecting a tower: click it (its body or its hex) opens `#tower-panel` (`.tp-up` upgrade, `.tp-sell` sell, `.tp-target button[data-mode]`); Esc / right click / click elsewhere closes it. Clicking a tower never opens the build menu. `start()` resets the armed tower type to harpoon. Sound ids `upgrade`, `sell` added.

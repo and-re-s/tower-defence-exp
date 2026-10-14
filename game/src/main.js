@@ -18,6 +18,8 @@ import { createFx } from './render/fx.js';
 import { createPlacement } from './render/placement.js';
 import { createUI } from './ui/screens.js';
 import { createHud } from './ui/hud.js';
+import { createTowerPanel } from './ui/towerPanel.js';
+import { hexKey } from './sim/hex.js';
 import { audio } from './audio/audio.js';
 import { installTestApi } from './testApi.js';
 
@@ -54,7 +56,8 @@ function start(level, seed) {
   rig.reset();
   audio.clearLog();
   towerView.clear(); projectileView.clear(); fx.clear();
-  hud.closeMenu();
+  armed = 'harpoon'; hud.setArmed(armed);
+  deselect();
   placement.reset();
   handleEvents();
   ui.sync();
@@ -86,9 +89,24 @@ const hud = createHud(ui.root, ui.hudRow, game, {
   arm,
 });
 hud.setArmed(armed);
+const towerPanel = createTowerPanel(ui.root, game, {
+  upgrade: () => { game.upgrade(towerPanel.towerId()); handleEvents(); },
+  sell: () => { const id = towerPanel.towerId(); game.sell(id); deselect(); handleEvents(); },
+  target: (mode) => { game.setTargeting(towerPanel.towerId(), mode); audio.play('ui_click', game.time); },
+});
+function deselect() { hud.closeMenu(); towerPanel.close(); placement.setSelected(null); }
+function selectTower(tower) {
+  hud.closeMenu();
+  towerPanel.open(tower.id);
+  placement.setSelected({ q: tower.q, r: tower.r });
+  audio.unlock(); audio.play('ui_click', game.time);
+}
 const placement = createPlacement({
   scene: stage.scene, camera: stage.camera, dom: stage.renderer.domElement, game,
   onPick(hex) {
+    const tower = game.towerAt.get(hexKey(hex.q, hex.r));
+    if (tower) { selectTower(tower); return; }
+    towerPanel.close();
     const blocker = game.buildBlocker(armed, hex.q, hex.r);
     if (blocker && blocker !== 'salvage') {
       hud.closeMenu(); placement.setSelected(null);
@@ -100,7 +118,7 @@ const placement = createPlacement({
     hud.openMenu(hex); placement.setSelected(hex);
     audio.unlock(); audio.play('ui_click', game.time);
   },
-  onCancel() { hud.closeMenu(); placement.setSelected(null); },
+  onCancel: deselect,
 });
 
 function muzzleSmoke(towerId) {
@@ -116,6 +134,8 @@ function handleEvents() {
     switch (ev.type) {
       case 'levelStart': clearActors(); flickerAt = -100; showWorld(); break;
       case 'build': audio.play('build', game.time); break;
+      case 'upgrade': audio.play('upgrade', game.time); fx.sparkle(ev.x, ev.y + 1.2, ev.z); break;
+      case 'sell': audio.play('sell', game.time); fx.chips(ev.x, ev.y, ev.z); break;
       case 'refuse': audio.play('refuse', game.time); break;
       case 'fire': audio.play(ev.towerType === 'cannon' ? 'cannon_fire' : 'harpoon_fire', game.time); towerView.onFire(ev.towerId, anim); if (ev.towerType === 'cannon') muzzleSmoke(ev.towerId); break;
       case 'hit': audio.play('enemy_hit', game.time); fx.hit(ev.x, ev.z); break;
@@ -154,8 +174,12 @@ const ctl = {
     handleEvents();
     ui.sync();
     hud.sync();
+    towerPanel.sync();
     render();
   },
+  upgrade: (id) => { const res = game.upgrade(id); handleEvents(); return res; },
+  sell: (id) => { if (towerPanel.towerId() === id) deselect(); const res = game.sell(id); handleEvents(); return res; },
+  setTargeting: (id, mode) => game.setTargeting(id, mode),
   build: (type, q, r) => { const res = game.build(type, q, r); handleEvents(); return res; },
   callNextWave: () => { const b = game.callNextWave(); handleEvents(); return b; },
   toScreen(x, y, z) {
@@ -171,7 +195,9 @@ function render() {
   towerView.update(game, anim);
   projectileView.update(game);
   fx.update(anim);
-  placement.update(anim, armed);
+  const selTower = game.towerById(towerPanel.towerId());
+  placement.update(anim, armed, selTower);
+  if (selTower) towerPanel.reposition(ctl.toScreen(selTower.x, selTower.y + 1.2, selTower.z));
   const sel = hud.menuHex();
   if (sel) {
     const tile = game.level.tileMap.get(`${sel.q},${sel.r}`);
@@ -201,6 +227,7 @@ function frame(now) {
   rig.update(dt);
   ui.sync();
   hud.sync();
+  towerPanel.sync();
   render();
   requestAnimationFrame(frame);
 }
@@ -214,7 +241,7 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') { e.preventDefault(); if (game.screen === 'playing' && game.callNextWave() >= 0) handleEvents(); }
     else if (e.code === 'Digit1') buildSelected('harpoon');
     else if (e.code === 'Digit2') buildSelected('cannon');
-    else if (e.code === 'Escape') { hud.closeMenu(); placement.setSelected(null); }
+    else if (e.code === 'Escape') deselect();
   }
 });
 

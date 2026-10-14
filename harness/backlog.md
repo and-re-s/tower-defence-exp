@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-041 · fix · todo · S — Round 05 minor bugs bundle
+### B-041 · fix · review · S — Round 05 minor bugs bundle
 Found: round-05 (minor)
 Repro/Done when:
 - with a cannon on (0,-1): `start({level:1,seed:1}); pause(); build('cannon',0,-1)`, click at screen (640,300) (on the cannon body): the build menu opens for the hex BEHIND it (0,-2) and picking Harpoon Post builds there; clicking the visible body of a tower must resolve to the tower's own hex (or be ignored/refused until B-009 selection), never the hex behind it;
@@ -23,7 +23,7 @@ Repro/Done when:
 
 
 
-### B-009 · M1 · todo · M — Select a tower: upgrade, sell, targeting
+### B-009 · M1 · review · M — Select a tower: upgrade, sell, targeting
 Why: depth through investment decisions; the decision stays on the map.
 Behavior: Clicking a tower selects it: its range ring appears and a small panel anchored next to it shows its stats, "Upgrade for N" (tiers 2 and 3, each visibly taller or more ornate), targeting priority (first / strongest / closest) and "Sell for N" (70% refund). Esc or right click deselects.
 Done when:

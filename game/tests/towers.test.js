@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game, TICK } from '../src/sim/game.js';
 import { SQRT3 } from '../src/sim/hex.js';
+import { pointOnPath } from '../src/sim/levels.js';
 
 function finite(v, path = 'state') {
   if (typeof v === 'number') assert.ok(Number.isFinite(v), `${path} not finite`);
@@ -177,7 +178,6 @@ test('same seed and same calls give an identical state, including helpers', () =
 });
 
 // --- B-008: Cliff Cannon ---
-import { pointOnPath } from '../src/sim/levels.js';
 
 test('cannon splash hits several clustered enemies on the same tick and never fires inside min range', () => {
   const g = new Game();
@@ -246,4 +246,77 @@ test('time scale resets on start and Space-like wave call is a sim-level concern
   g.timeScale = 16;
   g.start({ level: 1, seed: 1 });
   assert.equal(g.snapshot().timeScale, 1);
+});
+
+test('B-009: upgrade raises tier and stats, costs salvage, caps at tier 3', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  const spot = g.level.tiles.find((t) => t.terrain === 'grass');
+  const { id } = g.build('harpoon', spot.q, spot.r);
+  const t = g.towerById(id);
+  const before = g.towerStats(t);
+  const s0 = g.salvage;
+  assert.ok(g.upgrade(id).ok);
+  assert.equal(t.tier, 2);
+  assert.equal(g.salvage, s0 - 60);
+  assert.ok(g.towerStats(t).damage > before.damage && g.towerStats(t).rate > before.rate);
+  assert.ok(g.upgrade(id).ok);
+  assert.equal(t.tier, 3);
+  assert.equal(g.upgrade(id).reason, 'max');
+  assert.equal(t.spent, 50 + 60 + 90);
+});
+
+test('B-009: sell refunds 70% of everything spent and frees the hex', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  const spot = g.level.tiles.find((t) => t.terrain === 'grass');
+  const { id } = g.build('harpoon', spot.q, spot.r);
+  g.upgrade(id);
+  const s0 = g.salvage;
+  const res = g.sell(id);
+  assert.equal(res.refund, Math.floor(110 * 0.7));
+  assert.equal(g.salvage, s0 + 77);
+  assert.equal(g.towers.length, 0);
+  assert.ok(g.build('cannon', spot.q, spot.r).ok);
+  assert.equal(g.upgrade(id).ok, false);
+});
+
+test('B-009: upgrade is refused without salvage', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  const spot = g.level.tiles.find((t) => t.terrain === 'grass');
+  const { id } = g.build('harpoon', spot.q, spot.r);
+  g.salvage = 10;
+  assert.equal(g.upgrade(id).reason, 'salvage');
+  assert.equal(g.towerById(id).tier, 1);
+});
+
+test('B-009: strongest targeting picks the highest-hp enemy in range, first picks the furthest', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  const mid = { s: g.level.pathLength / 2, x: 0, z: 0 };
+  pointOnPath(g.level, mid.s, mid);
+  const spot = g.level.tiles
+    .filter((t) => ['grass', 'sand', 'rock'].includes(t.terrain) && !t.lighthouse)
+    .sort((a, b) => Math.hypot(a.x - mid.x, a.z - mid.z) - Math.hypot(b.x - mid.x, b.z - mid.z))[0];
+  const { id } = g.build('harpoon', spot.q, spot.r);
+  const t = g.towerById(id);
+  const mk = (hp, off) => {
+    const e = { id: g.nextId++, type: 'scuttler', hp, maxHp: hp, s: mid.s + off, x: 0, z: 0, heading: 0, born: 0, incoming: 0 };
+    g.enemies.push(e);
+    pointOnPath(g.level, e.s, e);
+    return e;
+  };
+  const weak = mk(10, 0.4);
+  const strong = mk(90, -0.4);
+  g.phase = 'wave'; g.spawnQueue = [{ type: 'scuttler', gap: 1 }]; g.spawnTimer = 99;
+  g.tick();
+  assert.equal(t.targetId, weak.id);
+  assert.ok(g.setTargeting(id, 'strongest'));
+  g.tick();
+  assert.equal(t.targetId, strong.id);
+  assert.equal(g.setTargeting(id, 'bogus'), false);
 });

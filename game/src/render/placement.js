@@ -36,8 +36,34 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
   let flashAt = null;
   let pointerIn = false;
 
+  const top = new THREE.Vector3();
+  const base = new THREE.Vector3();
+  /** A click on a tower's visible body counts as a click on the tower's own hex. */
+  function pickTower(clientX, clientY, rect) {
+    let best = null;
+    let bestD = 34;
+    for (const t of game.towers) {
+      const h = t.type === 'cannon' ? 2.0 : 3.0;
+      base.set(t.x, t.y + 0.2, t.z).project(camera);
+      top.set(t.x, t.y + h, t.z).project(camera);
+      const bx = rect.left + ((base.x + 1) / 2) * rect.width;
+      const by = rect.top + ((1 - base.y) / 2) * rect.height;
+      const tx = rect.left + ((top.x + 1) / 2) * rect.width;
+      const ty = rect.top + ((1 - top.y) / 2) * rect.height;
+      const vx = tx - bx;
+      const vy = ty - by;
+      const len2 = vx * vx + vy * vy || 1;
+      const u = Math.max(0, Math.min(1, ((clientX - bx) * vx + (clientY - by) * vy) / len2));
+      const d = Math.hypot(clientX - (bx + vx * u), clientY - (by + vy * u));
+      if (d < bestD) { bestD = d; best = { q: t.q, r: t.r }; }
+    }
+    return best;
+  }
+
   function pick(clientX, clientY) {
     const rect = dom.getBoundingClientRect();
+    const onTower = game.level && game.towers.length ? pickTower(clientX, clientY, rect) : null;
+    if (onTower) return onTower;
     ndc.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     // Intersect with the plane at the height of the tile found so far; two rounds settle on tall tiles.
@@ -85,16 +111,26 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
     refuseFlash(hex, time) { flashAt = hex; flash = time; },
     reset() { selected = null; flashAt = null; },
     hover: () => hover,
-    update(time, type = 'harpoon') {
+    update(time, type = 'harpoon', selTower = null) {
       outline.visible = ring.visible = disc.visible = selOutline.visible = false;
       if ((game.screen !== 'playing' && game.screen !== 'paused') || !game.level) return;
       const active = selected || (pointerIn ? hover : null);
       if (active) {
         const blocker = game.buildBlocker(type, active.q, active.r);
         const ok = !blocker || blocker === 'salvage';
-        outline.material = ok ? mats.amber : mats.coral;
+        outline.material = ok || blocker === 'occupied' ? mats.amber : mats.coral;
         outline.visible = true;
         place(active, type, time, ok ? 'ok' : 'no');
+      }
+      if (selTower) {
+        const tile = game.level.tileMap.get(hexKey(selTower.q, selTower.r));
+        const y = tile.height + 0.05;
+        const r = selTower.range * SQRT3;
+        outline.material = mats.amber;
+        outline.position.set(tile.x, y, tile.z);
+        outline.scale.setScalar(1);
+        outline.visible = true;
+        for (const o of [ring, disc]) { o.position.set(tile.x, y, tile.z); o.scale.set(r, 1, r); o.visible = true; }
       }
       if (flashAt && time - flash < 0.4) {
         const tile = game.level.tileMap.get(hexKey(flashAt.q, flashAt.r));

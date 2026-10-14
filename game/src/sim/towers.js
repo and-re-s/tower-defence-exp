@@ -13,6 +13,22 @@ export const TOWER_TYPES = {
   },
 };
 
+// Upgrade tiers: cost to reach the tier, damage and fire-rate multipliers. Tier 3 is the maximum.
+export const MAX_TIER = 3;
+export const TIERS = {
+  harpoon: { 2: { cost: 60, damage: 1.5, rate: 1.1 }, 3: { cost: 90, damage: 2.1, rate: 1.25 } },
+  cannon: { 2: { cost: 80, damage: 1.5, rate: 1.1 }, 3: { cost: 120, damage: 2.2, rate: 1.25 } },
+};
+export const TARGETING = ['first', 'strongest', 'closest'];
+export const SELL_REFUND = 0.7;
+
+/** Damage and shots per second of a tower of this type at this tier. */
+export function towerStats(type, tier) {
+  const base = TOWER_TYPES[type];
+  const m = TIERS[type][tier] || { damage: 1, rate: 1 };
+  return { damage: Math.round(base.damage * m.damage * 10) / 10, rate: Math.round(base.rate * m.rate * 1000) / 1000 };
+}
+
 export const BUILDABLE_TERRAIN = new Set(['sand', 'grass', 'rock']);
 
 /** Range in hexes for a tower of this type standing on this terrain. */
