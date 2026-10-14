@@ -32,7 +32,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--deep);
 #salvage-chip .value { color: var(--sand); }
 #salvage-chip.bump { transform: scale(1.1); }
 #wave-chip .value { color: var(--sand); }
-#wave-chip .label { min-width: 74px; }
+#wave-chip .label { min-width: 74px; font-family: var(--font-display); font-weight: 500; font-size: 13px; }
 .chip .meter { display: block; width: 92px; height: 5px; border-radius: 3px; background: rgba(227, 194, 122, 0.18); margin-top: 6px; overflow: hidden; }
 .chip .meter i { display: block; height: 100%; background: var(--amber); transition: width 0.3s ease; }
 

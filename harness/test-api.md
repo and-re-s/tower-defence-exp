@@ -16,6 +16,8 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 | `build(type, q, r)` | `__game.build('harpoon', 1, -1)` | same rules as the player (terrain, occupancy, cost); returns `{ok, reason}`; reasons: `path`, `terrain`, `lighthouse`, `occupied`, `salvage`, `invalid`. Works while paused. A refusal logs `refuse` in `audioLog()` |
 | `grantSalvage(n)` | `__game.grantSalvage(100)` | adds salvage |
 | `callNextWave()` | `__game.callNextWave()` | during a breather: starts the next wave now; returns the early bonus (added to salvage) or -1 |
+| `skipToWave(n)` | `__game.skipToWave(3)` | from `playing`/`paused`: clears enemies and projectiles and starts wave n (1..waveCount) now; returns true/false |
+| `win()` / `lose()` | `__game.win()` | forces `screen: 'won'` / `'lost'` (lose sets Light 0); returns true/false; false outside a level |
 | `toMenu()` | `__game.toMenu()` | back to the title screen |
 
 ## `state()` fields
@@ -30,7 +32,7 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 
 Notes: tile centers are `x = 1.5q`, `z = sqrt(3)(r + q/2)`; tile top heights are in `heights`.
 Waves: 6 on level 1, wave-clear bonus 20+5*wave salvage, early call bonus = 1.5 * breather seconds left. First breather 20 s, later 12 s. Later waves have scaled hp. Win = all waves cleared with Light > 0.
-Player input: hover a hex = amber (buildable) or coral outline; click a buildable hex opens the build menu (`#build-menu`, button `.build-opt`, key 1); clicking a non-buildable hex refuses; Esc/right click cancels; Space or `#next-wave` calls the wave. Works in `playing` and `paused`.
+Player input: hover a hex = amber (buildable) or coral outline; click a buildable hex opens the build menu (`#build-menu`, button `.build-opt`, key 1); clicking a non-buildable hex refuses; Esc/right click cancels; Space or `#next-wave` calls the wave. Works in `playing` and `paused` (key 1, Space and Esc too).
 Keys: Q/E rotate 60 degrees, wheel zoom, WASD pan, M mute, Enter on the title starts level 1.
 Lamp hit sound id: `lighthouse_hit`. Other ids so far: `build`, `refuse`, `harpoon_fire`, `enemy_hit`, `enemy_death`, `ui_click`, `ui_hover`, `wave_start`, `wave_clear`, `victory`, `defeat`.
 

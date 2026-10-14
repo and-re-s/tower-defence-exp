@@ -122,3 +122,52 @@ test('waves: skitterers are faster than scuttlers; calling early pays more the e
   assert.deepEqual([...types].sort(), ['scuttler', 'skitterer']);
   void TICK;
 });
+
+function fixedLayout(n, seed = 1) {
+  const g = new Game();
+  g.start({ level: 1, seed });
+  g.salvage = 50 * n;
+  const spots = rankSpots(g);
+  for (let i = 0; i < n; i++) g.build('harpoon', spots[i].t.q, spots[i].t.r);
+  for (let i = 0; i < 60 * 900 && g.screen === 'playing'; i++) g.tick();
+  return g;
+}
+
+test('tuning: a mediocre layout built once loses, a strong one still leaks', () => {
+  assert.equal(fixedLayout(3).screen, 'lost');
+  assert.equal(fixedLayout(6).screen, 'lost');
+  const eight = fixedLayout(8);
+  assert.equal(eight.screen, 'won');
+  assert.ok(eight.light < 20, 'eight posts should leak at least once');
+});
+
+test('test helpers: skipToWave, win and lose', () => {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  assert.equal(g.skipToWave(3), true);
+  assert.equal(g.wave, 3);
+  assert.equal(g.phase, 'wave');
+  assert.equal(g.skipToWave(99), true);
+  assert.equal(g.wave, g.level.def.waves.length);
+  assert.equal(g.forceWin(), true);
+  assert.equal(g.screen, 'won');
+  assert.equal(g.forceLose(), false);
+  g.start({ level: 1, seed: 1 });
+  assert.equal(g.forceLose(), true);
+  assert.equal(g.screen, 'lost');
+  assert.equal(g.skipToWave(2), false);
+});
+
+test('same seed and same calls give an identical state, including helpers', () => {
+  const run = () => {
+    const g = new Game();
+    g.start({ level: 1, seed: 1 });
+    g.build('harpoon', -3, 3);
+    g.build('harpoon', -2, 3);
+    for (let i = 0; i < 600; i++) g.tick();
+    g.skipToWave(2);
+    for (let i = 0; i < 900; i++) g.tick();
+    return JSON.stringify(g.snapshot());
+  };
+  assert.equal(run(), run());
+});

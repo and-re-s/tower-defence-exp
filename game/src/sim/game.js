@@ -123,6 +123,40 @@ export class Game {
     return bonus;
   }
 
+  /** Test helper: drops everything in flight and starts wave n (1-based) right now. Returns false outside a level. */
+  skipToWave(n) {
+    if (this.screen !== 'playing' && this.screen !== 'paused') return false;
+    const count = this.level.def.waves.length;
+    const target = Math.max(1, Math.min(count, Math.floor(Number(n) || 1)));
+    this.enemies = [];
+    this.projectiles = [];
+    for (const t of this.towers) t.targetId = 0;
+    this.wave = target - 1;
+    this.startWave();
+    return true;
+  }
+
+  /** Test helper: ends the level as a victory (needs a level in progress). */
+  forceWin() {
+    if (this.screen !== 'playing' && this.screen !== 'paused') return false;
+    this.enemies = [];
+    this.projectiles = [];
+    this.wave = this.level.def.waves.length;
+    this.phase = 'done';
+    this.screen = 'won';
+    this.events.push({ type: 'victory' });
+    return true;
+  }
+
+  /** Test helper: ends the level as a defeat. */
+  forceLose() {
+    if (this.screen !== 'playing' && this.screen !== 'paused') return false;
+    this.light = 0;
+    this.screen = 'lost';
+    this.events.push({ type: 'defeat' });
+    return true;
+  }
+
   /** Why a tower cannot be built on (q, r) right now, or null if it can. */
   buildBlocker(type, q, r) {
     const tile = this.level && this.level.tileMap.get(hexKey(q, r));

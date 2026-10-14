@@ -12,7 +12,7 @@ Vite + three.js, ES modules, no network. Run from `game/`: `npm run build`, `npm
   - `towers.js` tower stat table (Harpoon Post), buildable terrain, `towerRange` (+1 on rock). `clock.js` TICK.
   - `combat.js` tower targeting (first on path, skips doomed targets), homing projectiles, damage on arrival.
   - `game.js` `Game` class: screen state machine (menu/playing/paused/won/lost), waves
-    (breather -> wave -> done, `callNextWave`, clear bonus), enemies, towers, projectiles, salvage, `build()`, Light, `events` queue (`drainEvents()`), `snapshot()`.
+    (breather -> wave -> done, `callNextWave`, clear bonus), enemies, towers, projectiles, salvage, `build()`, Light, `events` queue (`drainEvents()`), `snapshot()`; test helpers `skipToWave`, `forceWin`, `forceLose`.
 - `src/render/` three.js views that read the sim; all animation uses the `anim` clock from main.js.
   - `stage.js` renderer (ACES, sRGB, soft shadows), scene, fog, sun, hemisphere light, sea.
   - `cameraRig.js` orbit camera: Q/E 60-degree steps, wheel zoom, WASD pan; eased on real dt.

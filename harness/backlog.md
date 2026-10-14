@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-038 · fix · todo · S — Round 02 minor bugs bundle
+### B-038 · fix · review · S — Round 02 minor bugs bundle
 Found: round-02 (minor)
 Repro/Done when:
 - the build hotkey `1` works while the screen is `paused` as documented in test-api.md (repro: `start({level:1,seed:1}); pause();` click a sand hex, press `1`: no tower is built and salvage stays 150; after `resume()` the same key builds). Either fix the key or correct the doc, but the "1" hint on the menu button must always be true;
@@ -17,7 +17,7 @@ Repro/Done when:
 
 
 
-### B-005 · M0 · todo · S — Title screen and the in-game HUD
+### B-005 · M0 · review · S — Title screen and the in-game HUD
 Why: the brief requires a main menu; the HUD makes the state of the battle readable.
 Behavior: The game opens on a title screen: "Tidewatch" large in Fredoka over the island at dusk, with a Play button that starts Driftwood Cove. In game, a minimal HUD shows Light, salvage and "Wave N / 6", styled per the spec (Deep Sea panels, sand text, amber highlights, Fredoka and Atkinson Hyperlegible from npm).
 Done when:
@@ -26,7 +26,7 @@ Done when:
 - the fonts are the spec fonts (no system-ui/Arial fallback visible), and the game makes no network requests;
 - the victory and defeat screens include a "Menu" button that returns to the title screen.
 
-### B-006 · M0 · todo · S — Test API game helpers
+### B-006 · M0 · review · S — Test API game helpers
 Why: without it the evaluator can't check mechanics in later rounds.
 Behavior: Extend `window.__game` (with `?test=1` only) with helpers to drive the game: build, upgrade and sell a tower at a hex, grant salvage, skip to a given wave, and force a win or loss; `state()` includes everything the HUD shows plus the tiles' terrain and occupancy.
 Done when:

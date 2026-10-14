@@ -130,6 +130,7 @@ let fpsSmooth = 60;
 const ctl = {
   game, rig, camera: stage.camera, canvas: stage.renderer.domElement,
   fps: () => fpsSmooth,
+  handleEvents,
   start,
   step(ticks) {
     if (game.screen !== 'paused') return;
@@ -195,7 +196,7 @@ window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (e.code === 'KeyM' && !e.repeat) audio.toggleMute();
   if (e.code === 'Enter' && game.screen === 'menu') start(1, 1);
-  if (game.screen === 'playing' && !e.repeat) {
+  if ((game.screen === 'playing' || game.screen === 'paused') && !e.repeat) {
     if (e.code === 'Space') { e.preventDefault(); if (game.callNextWave() >= 0) handleEvents(); }
     else if (e.code === 'Digit1') buildSelected();
     else if (e.code === 'Escape') { hud.closeMenu(); placement.setSelected(null); }

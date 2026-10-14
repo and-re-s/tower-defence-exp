@@ -15,14 +15,15 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
 
   const outlineGeo = new THREE.RingGeometry(0.8, 0.95, 6);
   outlineGeo.rotateX(-Math.PI / 2);
-  const ringGeo = new THREE.RingGeometry(0.965, 1, 64);
+  const ringGeo = new THREE.RingGeometry(0.978, 1, 96);
   ringGeo.rotateX(-Math.PI / 2);
   const discGeo = new THREE.CircleGeometry(1, 48);
   discGeo.rotateX(-Math.PI / 2);
   const mk = (color, opacity) => new THREE.MeshBasicMaterial({
     color, transparent: true, opacity, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
   });
-  const mats = { amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.8), disc: mk(PAL.amber, 0.09) };
+  const mats = { amber: mk(PAL.amber, 0.95), coral: mk(PAL.coral, 0.95), ring: mk(PAL.amber, 0.9), disc: mk(0xffa23a, 0.06) };
+  mats.disc.blending = THREE.AdditiveBlending; // warm glow that never darkens the island
   const outline = new THREE.Mesh(outlineGeo, mats.amber);
   const ring = new THREE.Mesh(ringGeo, mats.ring);
   const disc = new THREE.Mesh(discGeo, mats.disc);

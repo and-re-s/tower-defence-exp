@@ -15,3 +15,11 @@ Decisions: harpoon stats from spec (12 dmg, 1.2/s, 3.5 hexes) but waves are larg
 Known issues: tower build menu offers only one tower; clicking a tower does nothing yet (B-009); no tutorial; beam still hard-edged; a coral hover outline persists under the mouse on path hexes (intended). Items committed together in one commit for B-003/B-004 because the code is interleaved.
 Tried and reverted: spec-sized waves (5..15 crabs) were won by 3 posts without a leak.
 How to test: `?test=1`, `start({level:1,seed:1})`, `build('harpoon',1,-1)` (rock) -> salvage 100, `state().towers`; `callNextWave()`, `setTimeScale(8)`, watch `projectiles`, `kills`; hover/click via `toScreen`; losing the lamp or clearing wave 6 shows end screens; `npm test` has a bot that wins level 1.
+
+## Round 03
+Items: B-038 -> review, B-005 -> review, B-006 -> review
+Changes: level 1 hp scale x1.25: 3 or 6 posts built once lose, 8 posts win but leak; a greedy rebuilding bot still wins at 20 Light. Range ring is a thin amber ring with a faint additive warm fill (no darkening). Keys 1/Space/Esc work while paused. Wave label uses Fredoka (no slashed zero). Test API: `skipToWave`, `win`, `lose`.
+Decisions: B-005 was mostly built in rounds 1-2 (title with Play, HUD chips, end screens with Menu); I only fixed the font and checked it. Salvage still piles up because there is one tower; the real fix is B-008/B-009.
+Known issues: salvage sink missing until more towers; a 6-post fixed layout loses outright (not just a few Light).
+Tried and reverted: hp x1.15/1.2 left 8 posts with zero leaks.
+How to test: `start({level:1,seed:1}); pause();` click a hex, press 1 -> tower built. `skipToWave(4)`, `win()`, `lose()`; npm test has layout tuning and determinism tests.
