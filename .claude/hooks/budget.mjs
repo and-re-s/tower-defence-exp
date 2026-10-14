@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Budget hook for the game experiment. See CLAUDE.md for how the orchestrator uses it.
 //
-//   (no option)  Claude Code Stop hook: estimates the spend, saves checkpoints, and keeps the
-//                round loop going by blocking the stop with a status message for the orchestrator.
-//   --start      arms the loop and prints the status for the next round
-//   --status     prints the status without changing anything
-//   --pause      disarms the loop
+//   (no option)      Claude Code Stop hook: estimates the spend, saves checkpoints, and keeps the
+//                    round loop going by blocking the stop with a status message for the orchestrator.
+//   --session-start  Claude Code SessionStart hook: brings the checkout up to date with its upstream
+//                    branch, because a cloud session can start from an older commit
+//   --start          arms the loop and prints the status for the next round
+//   --status         prints the status without changing anything
+//   --pause          disarms the loop
 //
 // Files under harness/:
 //   budget.json          settings you may edit: limit_usd, checkpoints_usd, correction, stall_limit, ...
@@ -59,10 +61,16 @@ main().catch((err) => {
 });
 
 async function main() {
-  const cfg = { ...DEFAULTS, ...readJson(harness('budget.json'), {}) };
+  if (MODE === '--session-start') {
+    const raw = await readStdin();
+    let input = {};
+    try { input = raw ? JSON.parse(raw) : {}; } catch { /* run with defaults */ }
+    return sessionStart(input);
+  }
+  if (MODE === '--start') return start();
+  const cfg = loadConfig();
   const state = loadState();
   if (MODE === '--status') return print(statusText('status', cfg, state, gather(cfg, state)));
-  if (MODE === '--start') return start(cfg, state);
   if (MODE === '--pause') {
     state.phase = 'idle';
     saveState(state);
@@ -75,7 +83,11 @@ async function main() {
 
 // ---------- modes ----------
 
-function start(cfg, state) {
+function start() {
+  // Bring the checkout up to date first: the experiment's state lives in the repository.
+  const sync = syncWithUpstream();
+  const cfg = loadConfig();
+  const state = loadState();
   const spend = totalSpend(state, cfg);
   if (spend >= cfg.limit_usd) {
     state.phase = 'done';
@@ -85,8 +97,20 @@ function start(cfg, state) {
   if (exists(harness('STOP'))) {
     return print(`Budget hook: the loop can't start while harness/STOP exists. It says: ${firstLine(harness('STOP'))}\nThe person needs to remove harness/STOP first.`);
   }
+  if (sync.error) {
+    log(`start refused: ${divergedText(sync)}`);
+    return print(`Budget hook: the loop can't start: ${divergedText(sync)}.`);
+  }
+  const stale = staleConfig();
+  if (stale) {
+    log(`start refused: stale configuration (${stale.files.join(', ')})`);
+    return print(`Budget hook: the loop can't start: this session started from an older commit, and Claude Code loaded these files before they were brought up to date: ${stale.files.join(', ')}. Ask the person to start a new session. If new sessions keep starting from an old commit, they can edit the cloud environment's setup script: any change makes the next session rebuild the environment's cached snapshot from the latest commit.`);
+  }
   if (!exists(harness('budget.json'))) writeJson(harness('budget.json'), DEFAULTS);
   if (!state.started_at) state.started_at = Date.now();
+  state.armed_at = Date.now(); // a session first seen after this is counted from here, not from its start
+  // The loop runs only in the session whose transcript holds this id, i.e. the one that ran --start.
+  state.start_id = `start-${Date.now().toString(36)}`;
   if (state.spec_versions == null) state.spec_versions = countSpecVersions();
   state.phase = 'running';
   state.stalls = 0;
@@ -101,11 +125,18 @@ function start(cfg, state) {
 async function onStop(cfg, state, input) {
   if (state.phase !== 'running' && state.phase !== 'finishing') return; // the loop isn't armed
   if (!input.transcript_path || !input.session_id) throw new Error('the Stop hook input has no transcript_path or session_id');
+  if (state.start_id && !readText(input.transcript_path).includes(state.start_id)) {
+    // Armed by another session, which may be gone. Don't take over a session that didn't ask for it.
+    return out({ systemMessage: 'The experiment loop is armed, but not in this session. To run it here, ask Claude to continue the experiment.' });
+  }
 
   await sleep(1500); // the transcript is written asynchronously; give the last lines a moment
 
-  // 1. Spend.
-  const sess = sessionSpend(input.transcript_path, input.session_id, state.started_at || 0);
+  // 1. Spend. Each session counts from the later of the experiment's start and the --start that armed
+  // the loop when the hook first saw it, so chat before "continue the experiment" isn't counted.
+  state.session_from = state.session_from || {};
+  if (!state.session_from[input.session_id]) state.session_from[input.session_id] = Math.max(state.started_at || 0, state.armed_at || 0);
+  const sess = sessionSpend(input.transcript_path, input.session_id, state.session_from[input.session_id]);
   const prev = state.sessions[input.session_id];
   if (!prev || sess.usd >= prev.usd) state.sessions[input.session_id] = { ...sess, updated: new Date().toISOString() };
   const spend = totalSpend(state, cfg);
@@ -116,6 +147,16 @@ async function onStop(cfg, state, input) {
     writeJson(harness('spend.json'), spendReport(state, cfg, spend, gather(cfg, state)));
     log(`stop: harness/STOP exists, loop stopped at ${usd(spend)}`);
     return out({ systemMessage: `Experiment loop stopped at ${usd(spend)}: harness/STOP exists. It says: ${firstLine(harness('STOP'))}` });
+  }
+
+  // An agent is still working in the background (Claude Code moved it there): the round isn't over.
+  // Let the session rest; the agent's report wakes it up, and the round's real end comes back here.
+  const running = runningAgents(input.transcript_path);
+  if (running.length) {
+    saveState(state);
+    writeJson(harness('spend.json'), spendReport(state, cfg, spend, gather(cfg, state)));
+    log(`stop: waiting for ${running.join(', ')} to finish in the background, spend ${usd(spend)}`);
+    return out({ systemMessage: `Waiting for the ${running.join(' and ')} to finish in the background · ${usd(spend)} of ${usd(cfg.limit_usd)}` });
   }
 
   // 2. Did the planner run during the round that just ended?
@@ -179,13 +220,75 @@ async function onStop(cfg, state, input) {
   });
 }
 
+// ---------- keeping the checkout current ----------
+
+// A cloud session can start from an older commit: cloud environments reuse a cached disk snapshot,
+// and a session started from a local copy brings that copy. The experiment's state lives in the
+// repository, so the SessionStart hook fast-forwards the checkout to its upstream branch. Claude Code
+// has already loaded CLAUDE.md, .mcp.json and .claude/ by then, so if any of those changed, the
+// session is marked stale and --start refuses to arm the loop in it.
+function sessionStart(input) {
+  // Claude Code has just started (a new session, or a paused VM restored) and loaded the current files.
+  if (input.source !== 'compact' && input.source !== 'clear') {
+    const marker = staleMarker();
+    if (marker) fs.rmSync(marker, { force: true });
+  }
+  const sync = syncWithUpstream();
+  if (sync.error) return print(`Budget hook: ${divergedText(sync)}. Don't run the experiment from this session until that's resolved.`);
+  if (!sync.pulled) return;
+  if (sync.config.length) {
+    return print(`Budget hook: this session started from an older commit, so I pulled ${commits(sync.pulled)} from ${sync.upstream}. Claude Code loaded these files at startup, before the pull, so this session runs their old versions: ${sync.config.join(', ')}. Don't run the experiment from this session; ask the person to start a new one.`);
+  }
+  return print(`Budget hook: this session started from an older commit, so I pulled ${commits(sync.pulled)} from ${sync.upstream}. Only the experiment's data changed, so the session is up to date.`);
+}
+
+function divergedText(sync) {
+  return `this checkout is ${commits(sync.behind)} behind ${sync.upstream} and can't be fast-forwarded (${sync.error}), so the person needs to decide how to combine the two histories`;
+}
+function commits(n) { return `${n} commit${n === 1 ? '' : 's'}`; }
+
+// Fast-forwards the current branch to its upstream. Returns what happened; never throws.
+function syncWithUpstream() {
+  const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+  if (!upstream) return { pulled: 0, config: [] }; // no upstream branch: nothing to compare with
+  spawnSync('git', ['fetch', '--quiet'], { cwd: PROJECT, encoding: 'utf8', timeout: 60_000 });
+  const behind = Number(git(['rev-list', '--count', 'HEAD..@{u}']) || 0);
+  if (!behind) return { upstream, pulled: 0, config: [] };
+  const before = git(['rev-parse', 'HEAD']);
+  const r = spawnSync('git', ['merge', '--ff-only', '--quiet', '@{u}'], { cwd: PROJECT, encoding: 'utf8', timeout: 60_000 });
+  if (r.status !== 0) {
+    const output = String(r.stderr || r.stdout || '');
+    const error = (output.split('\n').find((l) => l.startsWith('fatal:') || l.startsWith('error:')) || tail(output) || 'git merge --ff-only failed').trim();
+    log(`sync: ${behind} commits behind ${upstream}, fast-forward failed: ${error}`);
+    return { upstream, behind, pulled: 0, config: [], error };
+  }
+  const changed = (git(['diff', '--name-only', before, 'HEAD']) || '').split('\n').filter(Boolean);
+  const config = changed.filter((f) => f === 'CLAUDE.md' || f === '.mcp.json' || f.startsWith('.claude/'));
+  if (config.length) {
+    const marker = staleMarker();
+    if (marker) writeJson(marker, { from: before, to: git(['rev-parse', 'HEAD']), files: config, at: new Date().toISOString() });
+  }
+  log(`sync: fast-forwarded ${behind} commits from ${upstream}${config.length ? `; loaded before the update: ${config.join(', ')}` : ''}`);
+  return { upstream, behind, pulled: behind, config };
+}
+
+// Kept inside .git, which belongs to this checkout and is never committed.
+function staleMarker() {
+  const dir = git(['rev-parse', '--absolute-git-dir']);
+  return dir ? path.join(dir, 'budget-hook-stale-session.json') : null;
+}
+function staleConfig() {
+  const marker = staleMarker();
+  return marker ? readJson(marker, null) : null;
+}
+
 // ---------- what the orchestrator reads ----------
 
 function statusText(ctx, cfg, state, g, spend = totalSpend(state, cfg), saved = []) {
   const lines = [];
   if (ctx === 'round-done') lines.push(`Budget hook: round ${pad(g.lastRound)} is complete (${g.lastRow.verdict || 'no verdict'} · Total ${g.lastRow.total}).`);
   else if (ctx === 'unfinished') lines.push(`Budget hook: round ${pad(g.nextRound)} has no evaluation in harness/scores.md yet, so it is unfinished.`);
-  else if (ctx === 'start') lines.push(`Budget hook: the loop is running.${g.lastRound ? ` The last evaluated round is ${pad(g.lastRound)}.` : ''}`);
+  else if (ctx === 'start') lines.push(`Budget hook: the loop is running in this session (${state.start_id}).${g.lastRound ? ` The last evaluated round is ${pad(g.lastRound)}.` : ''}`);
   else lines.push(`Budget hook: status (the loop is ${state.phase || 'idle'}).`);
   lines.push(`Spend so far: ${usd(spend)} of ${usd(cfg.limit_usd)} (estimate).`);
   if (ctx === 'status' && spend >= cfg.limit_usd) {
@@ -342,7 +445,7 @@ function sessionSpend(transcriptPath, sessionId, startedAt) {
   const cacheFile = path.join(os.tmpdir(), `budget-hook-cache-${sessionId}.json`);
   const cache = readJson(cacheFile, {});
   const files = [{ file: transcriptPath, agent: 'orchestrator', main: true }];
-  const subDir = path.join(transcriptPath.replace(/\.jsonl$/, ''), 'subagents');
+  const subDir = subagentDir(transcriptPath);
   for (const f of safeReaddir(subDir)) {
     if (!f.endsWith('.jsonl')) continue;
     const meta = readJson(path.join(subDir, f.replace(/\.jsonl$/, '.meta.json')), {});
@@ -410,6 +513,80 @@ function sessionSpend(transcriptPath, sessionId, startedAt) {
     unknown_models: [...unknown],
     background_capped: capped,
   };
+}
+
+function subagentDir(transcriptPath) {
+  return path.join(transcriptPath.replace(/\.jsonl$/, ''), 'subagents');
+}
+
+// Subagents still at work, which happens when Claude Code moves them to the background: the transcript
+// changed in the last few minutes, it doesn't end with the agent's final answer, and the agent's
+// result hasn't reached the main conversation.
+const RUNNING_WINDOW_MS = 10 * 60_000;
+function runningAgents(transcriptPath) {
+  const dir = subagentDir(transcriptPath);
+  const now = Date.now();
+  const candidates = [];
+  for (const f of safeReaddir(dir)) {
+    const m = f.match(/^agent-(.+)\.jsonl$/);
+    if (!m) continue;
+    const file = path.join(dir, f);
+    const st = statOf(file);
+    if (!st || now - st.mtimeMs > RUNNING_WINDOW_MS || agentFinished(file)) continue;
+    candidates.push({ id: m[1], agent: readJson(path.join(dir, `agent-${m[1]}.meta.json`), {}).agentType || 'subagent' });
+  }
+  if (!candidates.length) return [];
+  const reported = reportedAgentIds(transcriptPath);
+  return [...new Set(candidates.filter((c) => !reported.has(c.id)).map((c) => c.agent))];
+}
+
+// The agent's last message is its final answer: a reply with text and no tool call, or its hand-back
+// call. Claude Code writes a line per content block, and a finished agent's log may end with the
+// hand-back's tool result, so look at the last assistant line rather than the last line.
+function agentFinished(file) {
+  const lines = readTail(file, 512 * 1024).split('\n');
+  for (let i = lines.length - 1; i >= 0; i--) {
+    let e;
+    try { e = JSON.parse(lines[i]); } catch { continue; }
+    if (e.type !== 'assistant') continue;
+    const blocks = Array.isArray(e.message && e.message.content) ? e.message.content : [];
+    const calls = blocks.filter((b) => b && b.type === 'tool_use');
+    if (calls.length) return calls.every((b) => /handback/i.test(String(b.name || '')));
+    return blocks.some((b) => b && b.type === 'text'); // a thinking-only line: the rest is still coming
+  }
+  return false; // no reply yet: the agent has just started
+}
+
+// Agents whose result has reached the main conversation: a finished Agent tool result, a hand-back
+// message, or a background-task notice.
+function reportedAgentIds(mainTranscript) {
+  const ids = new Set();
+  for (const line of readText(mainTranscript).split('\n')) {
+    if (line.includes('"agentId"')) {
+      try {
+        const r = JSON.parse(line).toolUseResult;
+        if (r && r.agentId && !/running|async|background|launch|pending/i.test(String(r.status || ''))) ids.add(String(r.agentId));
+      } catch { /* not a JSON line */ }
+    }
+    for (const m of line.matchAll(/agent-message from=\\?"([\w-]+)/g)) ids.add(m[1]);
+    for (const m of line.matchAll(/<task-id>([\w-]+)<\/task-id>(?:(?!<\/task-notification>)[\s\S])*?<status>(\w+)<\/status>/g)) {
+      if (!/running|pending/i.test(m[2])) ids.add(m[1]);
+    }
+  }
+  return ids;
+}
+
+function readTail(file, bytes) {
+  try {
+    const fd = fs.openSync(file, 'r');
+    try {
+      const size = fs.fstatSync(fd).size;
+      const len = Math.min(bytes, size);
+      const buf = Buffer.alloc(len);
+      fs.readSync(fd, buf, 0, len, size - len);
+      return buf.toString('utf8');
+    } finally { fs.closeSync(fd); }
+  } catch { return ''; }
 }
 
 function totalSpend(state, cfg) {
@@ -510,6 +687,10 @@ function buildGame() {
 }
 
 // ---------- state and files ----------
+
+function loadConfig() {
+  return { ...DEFAULTS, ...readJson(harness('budget.json'), {}) };
+}
 
 function loadState() {
   const s = readJson(harness('.budget-state.json'), {});

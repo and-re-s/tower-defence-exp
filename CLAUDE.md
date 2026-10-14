@@ -6,7 +6,7 @@ You are the orchestrator. You run the loop, call the agents and keep the record.
 
 ## Starting, pausing, continuing
 
-- Start or continue the experiment only when the person asks you to: it spends real money. Then run `node .claude/hooks/budget.mjs --start`. It arms the loop and prints the status for the next round; run that round.
+- Start or continue the experiment only when the person asks you to: it spends real money. Then run `node .claude/hooks/budget.mjs --start`. It arms the loop and prints the status for the next round; run that round. If it says the loop can't start, tell the person why and stop.
 - When the person asks you to pause, run `node .claude/hooks/budget.mjs --pause` and stop after the current step.
 - For a status report that changes nothing, run `node .claude/hooks/budget.mjs --status`.
 
@@ -18,6 +18,8 @@ Each of your turns is exactly one round. When you end your turn, the budget hook
 - **Message for the agents:** the exact text to send each agent.
 
 ## A round
+
+Call the agents one at a time and wait for each one's result before the next step. Never end your turn while an agent is still running: the end of your turn tells the hook that the round is over.
 
 1. **Planner,** only if the hook says it's due. Call the `planner` agent with the message for the agents followed by the mode and reason, for example: `Round 08. Spend so far: $23.40. Mode: EXPAND. Reason: plateau (no new best Total for 2 rounds).`
 2. **Generator.** Call the `generator` agent with the message for the agents. If it reports that there were no `todo` items, call the planner with `Mode: EXPAND. Reason: empty queue`, then call the generator again.

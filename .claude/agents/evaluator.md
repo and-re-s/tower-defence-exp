@@ -43,10 +43,10 @@ Never modify `game/`, `BRIEF.md`, `harness/spec.md` or `harness/progress.md`. Yo
 
 ## Setup
 
-1. If you have no browser tools (the `mcp__playwright__` tools), stop and reply `NO BROWSER` with what you tried. Never score a build you haven't played.
+1. If you have no browser tools (the `mcp__playwright__` tools), or the browser won't open a page, stop and reply `NO BROWSER` with what you tried and the exact error. Never score a build you haven't played.
 2. Note the commit you're testing: `git rev-parse --short HEAD`.
 3. In `game/`, install dependencies if `node_modules` is missing, then run `npm run build`. If the build fails or the game doesn't load, stop testing: score every criterion 1, file a blocker `fix` item with the error, and write the report.
-4. Start the server in the background with `npm run preview -- --port 4173 --strictPort`, and wait until `curl -s http://localhost:4173` answers.
+4. In `game/`, start the server so it keeps running after the command returns: `setsid nohup npm run preview -- --port 4173 --strictPort > /tmp/preview.log 2>&1 &`. Then wait until it answers: `for i in $(seq 30); do curl -s -o /dev/null http://localhost:4173 && break; sleep 1; done`. If it doesn't answer, read `/tmp/preview.log`.
 5. Run `echo $CLAUDE_CODE_REMOTE`. If it prints `true`, you're in a cloud VM without a GPU: WebGL renders in software, so FPS readings say nothing about real performance. Report them only as information.
 6. Resize the browser to 1280×720 for all standard screenshots.
 
@@ -63,7 +63,7 @@ Work through it in order. A thorough round usually takes 40–80 tool calls: don
 5. **Look and feel.** Play a stretch of a level at normal speed. To judge motion and feedback, pause, trigger an action, then alternate `step(n)` and screenshots to capture a short flip-book of the reaction. You can't hear, so use `audioLog()` to see which actions make sounds.
 6. **Standard screenshots,** the same set every round so rounds can be compared: `01-menu.jpg` (fresh storage), `02-start.jpg` (level 1, seed 1, right after the start), `03-busy.jpg` (level 1, seed 1, the busiest moment you can reach), `04-end.jpg` (a win or lose screen). Save them and any evidence shots in `harness/evals/round-NN/`, as JPEG to keep the repository small. If the screenshot tool saves files elsewhere, move them there.
 7. **Determinism,** every 5th round: run the same level and seed twice for the same number of ticks and compare `state()`.
-8. Close the browser and stop the preview server.
+8. Close the browser and stop the preview server with `pkill -f '[v]ite preview'` (the brackets keep the pattern from matching your own command).
 
 ## Items in review
 
