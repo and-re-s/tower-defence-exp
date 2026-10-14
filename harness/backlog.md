@@ -7,28 +7,18 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-043 · fix · review · S — Round 07 minor bugs bundle
-Found: round-07 (minor)
+### B-044 · fix · todo · S — Round 08 minor bugs bundle
+Found: round-08 (minor)
 Repro/Done when:
-- the hover/selection hex outline is drawn at ground level, so on a tower hex it appears one hex in front of the tower (hover-occupied2.jpg: tower at (595,285), pale outline at (596,332)); draw it at the tile's top height so it frames the hex the tower stands on;
-- at a 640x420 viewport the build menu overlaps the Light/Salvage HUD and the island is cropped (small-viewport.jpg); keep the menu inside the free area and refit the camera to the viewport;
-- the Shellback's own shell rings are cyan-white like the slowed ring, so a slowed and an unslowed Shellback look alike (armor-spark-nobell.jpg: no bell in range, still ringed); give the slow ring a clearly different colour or shape from the shell.
+- at 640x420 and 800x500 the "Next wave" button is half hidden behind the tower bar (800x500: button y 403-436, bar y 416-492; round-08/small-start.jpg, 800x500.jpg); keep it fully visible and clickable above the bar at every viewport from 640x420 up (compare `getBoundingClientRect()` of `#next-wave` and `#tower-bar`: no overlap);
+- at 640x420 the open build menu still covers the lighthouse and most of the island (small-menu2.jpg); show the menu beside the clicked hex or as a compact row so the hex and the lighthouse stay visible;
+- the Tide Bell range preview still uses the amber "buildable" ring; give it a teal tint so it does not read as a build cue.
 
 ---
 
 ## M1 — full core
 
 
-
-### B-010 · M1 · review · M — Tide Bell and the Shellback
-Failed round-07: "Done when" line 3 (armored spark visible in screenshots): the bell ring is clearly visible (bell-18.jpg) and `bell_ring`/`armor_hit` are in `audioLog()`, but at the tick of an `armor_hit` (harpoon on a Shellback, no bell in range, camera default and zoom 0.2) no spark is distinguishable (armor-spark-nobell.jpg, armor-crop.jpg, armor-close.jpg). Repro: `start({level:1,seed:1}); pause(); grantSalvage(3000); build('harpoon',-3,2); build('harpoon',-3,1); setTargeting(1,'strongest'); skipToWave(6)`, step 20 ticks at a time until a Shellback has progress > 0.05, then step(1) until `audioLog()` shows a new `armor_hit` and screenshot. Make the spark a bright white-yellow burst of a few chips, large enough to read at the default camera, lasting ~0.2 s. Lines 1, 2 and 4 verified (slow 0.6x measured from progress; harpoon 6 vs 12 on Scuttler, cannon 24 on both; bar shows 3 towers with hotkeys 1-3) and need not be rebuilt.
-Why: counter-choices — armor punishes harpoon spam, slows set up the cannon.
-Behavior: The Tide Bell (cost 70) is an open arch with a bell that rings every 2 s, sending an expanding ring that slows ground enemies within 2.5 hexes by 40% for 2 s (slowed enemies show a Shallows-tinted trail). The Shellback (tall hermit shell, 120 hp, slow) takes 50% less damage from harpoons; armored hits spark and make a lower crunch.
-Done when:
-- an enemy inside a bell's radius moves at about 60% speed for 2 s after a pulse (measured from positions in `state()`);
-- a harpoon hit on a Shellback removes half the hp it removes from a Scuttler; cannon damage is unaffected;
-- the bell ring and the armored spark are visible in screenshots; both have their own sounds in `audioLog()`;
-- the tower bar shows three towers with hotkeys 1–3.
 
 ### B-011 · M1 · todo · M — Lantern and the Mistwalker
 Why: pillar "Hold the light": light as a weapon and visibility as a mechanic.

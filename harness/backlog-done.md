@@ -16,3 +16,5 @@ One line per item.
 - B-041 · M0 · S — Round 05 minor bugs bundle — done round-06 (19fabd5)
 - B-042 · M0 · S — Round 06 minor bugs bundle — done round-07 (75c22ff)
 - B-009 · M1 · M — Select a tower: upgrade, sell, targeting — done round-07 (75c22ff)
+- B-010 · M1 · M — Tide Bell and the Shellback — done round-08 (5034bc7)
+- B-043 · M0 · S — Round 07 minor bugs bundle — done round-08 (5034bc7)

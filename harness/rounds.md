@@ -8,3 +8,4 @@
 | 05 | $4.18 | – (not due) | B-040, B-008 → review; build, tests, smoke ok | PASS · Total 21 · since best 0 |
 | 06 | $5.33 | – (not due) | B-041, B-009 → review; build, tests, smoke ok | PASS · Total 22 · since best 0 (B-041 verified, B-009 failed: sell refund rounding) |
 | 07 | $6.78 | – (not due) | B-042, B-009 fix, B-010 → review; build, tests, smoke ok | PASS · Total 23 · since best 0 (B-009, B-042 verified; B-010 failed: no visible armor spark) |
+| 08 | $8.24 | – (not due) | B-043, B-010 → review; build, tests, smoke ok | PASS · Total 23 · since best 1 |
