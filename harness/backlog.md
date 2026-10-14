@@ -7,32 +7,18 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-038 · fix · review · S — Round 02 minor bugs bundle
-Found: round-02 (minor)
+### B-039 · fix · todo · S — Round 03 minor bugs bundle
+Found: round-03 (minor)
 Repro/Done when:
-- the build hotkey `1` works while the screen is `paused` as documented in test-api.md (repro: `start({level:1,seed:1}); pause();` click a sand hex, press `1`: no tower is built and salvage stays 150; after `resume()` the same key builds). Either fix the key or correct the doc, but the "1" hint on the menu button must always be true;
-- level 1 is no longer trivially won: with 3 Harpoon Posts (`build` at (-3,3), (-2,3), (-4,1)) the run reaches wave 4 at Light 20 with 305 unspent salvage, and 8 posts win with no leak at all (Light 20/20, 544 salvage left at the end); tune wave size/hp or salvage so a mediocre layout loses Light and salvage has to be spent carefully (a 6-post layout built once at the start should lose several Light, a 3-post layout should lose);
-- the range ring while hovering is a muddy grey translucent disc over the sea; make it a thin amber ring with a faint warm fill that does not darken the island.
+- the victory panel "Light left: 20 / 20" still renders the "/ 20" in Atkinson Hyperlegible with a slashed zero ("2Ø"); use Fredoka for every number in panels and chips ("Next in 20s" too if it shows it);
+- `skipToWave(0)` and `skipToWave(7)` (waveCount 6) return true although test-api.md says 1..waveCount; return false and change nothing outside the range;
+- difficulty cliff on level 1 (seed 1, best-placed posts built once at start with 250 granted salvage, 16x): 3 posts lose at wave 4, 6 posts lose at wave 6 (Light 0, 622 salvage unspent), 8 posts win with Light 19; smooth it so 6 posts end with a few Light left, not at 0;
+- the "Next wave" button disappears while `paused` (Space still works); keep it visible but disabled, or keep it;
+- the title subtitle pill sits over the lighthouse lamp on the menu (01-menu.jpg); move the title block clear of the lamp.
 
 
 
 
-### B-005 · M0 · review · S — Title screen and the in-game HUD
-Why: the brief requires a main menu; the HUD makes the state of the battle readable.
-Behavior: The game opens on a title screen: "Tidewatch" large in Fredoka over the island at dusk, with a Play button that starts Driftwood Cove. In game, a minimal HUD shows Light, salvage and "Wave N / 6", styled per the spec (Deep Sea panels, sand text, amber highlights, Fredoka and Atkinson Hyperlegible from npm).
-Done when:
-- a fresh page load shows the title screen with `screen: 'menu'`; clicking Play gets to `screen: 'playing'` in level 1;
-- the HUD values match `state()` (light, salvage, wave) throughout a wave;
-- the fonts are the spec fonts (no system-ui/Arial fallback visible), and the game makes no network requests;
-- the victory and defeat screens include a "Menu" button that returns to the title screen.
-
-### B-006 · M0 · review · S — Test API game helpers
-Why: without it the evaluator can't check mechanics in later rounds.
-Behavior: Extend `window.__game` (with `?test=1` only) with helpers to drive the game: build, upgrade and sell a tower at a hex, grant salvage, skip to a given wave, and force a win or loss; `state()` includes everything the HUD shows plus the tiles' terrain and occupancy.
-Done when:
-- `build(type, q, r)` follows the same rules as the player (cost, terrain) and returns a success flag; `grantSalvage(n)`, `skipToWave(n)`, `win()` and `lose()` work from `playing`;
-- every member and state field is documented in `harness/test-api.md` with an example call;
-- `start({ level: 1, seed: 1 })` twice and the same sequence of `build` and `step` calls give identical `state()`.
 
 ---
 

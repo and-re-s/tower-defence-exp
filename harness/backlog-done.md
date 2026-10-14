@@ -6,3 +6,6 @@ One line per item.
 - B-037 · M0 · S — Round 01 minor bugs bundle — done round-02 (5646e90)
 - B-003 · M0 · M — Build Harpoon Posts with salvage — done round-02 (5646e90)
 - B-004 · M0 · M — Six waves, victory, and play again — done round-02 (5646e90)
+- B-038 · M0 · S — Round 02 minor bugs bundle — done round-03 (91629fb)
+- B-005 · M0 · S — Title screen and the in-game HUD — done round-03 (91629fb)
+- B-006 · M0 · S — Test API game helpers — done round-03 (91629fb)

@@ -1,19 +1,20 @@
 {
-  "spend_usd": 1.18,
+  "spend_usd": 2.74,
   "limit_usd": 12,
   "correction": 1,
-  "rounds_evaluated": 1,
-  "best_total": 13,
+  "rounds_evaluated": 2,
+  "best_total": 19,
   "checkpoints_saved": [],
   "by_agent_usd": {
-    "orchestrator": 0.1214,
+    "orchestrator": 0.2015,
     "planner": 0.3351,
-    "evaluator": 0.7283
+    "generator": 0.6393,
+    "evaluator": 1.5661
   },
   "by_model_usd": {
-    "claude-sonnet-5-5": 0.8497,
+    "claude-sonnet-5-5": 2.4069,
     "claude-opus-5-5": 0.3351
   },
   "note": "Estimate at API list prices from the session transcripts plus Claude Code's own cost records; by_agent and by_model are before the correction factor.",
-  "updated": "2026-10-14T11:59:23.940Z"
+  "updated": "2026-10-14T12:23:05.657Z"
 }
