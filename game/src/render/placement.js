@@ -43,7 +43,7 @@ export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) 
     let best = null;
     let bestD = 34;
     for (const t of game.towers) {
-      const h = t.type === 'cannon' ? 2.0 : 3.0;
+      const h = t.type === 'cannon' ? 2.0 : t.type === 'bell' ? 3.0 : 3.0;
       base.set(t.x, t.y + 0.2, t.z).project(camera);
       top.set(t.x, t.y + h, t.z).project(camera);
       const bx = rect.left + ((base.x + 1) / 2) * rect.width;

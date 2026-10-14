@@ -2,4 +2,6 @@
 export const ENEMY_TYPES = {
   scuttler: { hp: 40, speed: 1.0, leak: 1, reward: 4 },
   skitterer: { hp: 25, speed: 1.8, leak: 1, reward: 3 },
+  // armor: share of piercing (harpoon) damage that is shrugged off.
+  shellback: { hp: 120, speed: 0.6, leak: 2, reward: 9, armor: 0.5 },
 };

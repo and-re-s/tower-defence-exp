@@ -22,11 +22,12 @@ export const LEVELS = {
     // Breather before the first wave, then per-wave groups of enemies spawned `interval` s apart.
     firstBreather: 20,
     breather: 12,
-    // [scuttlers, skitterers, hp scale] per wave
-    waves: [[8, 0, 1], [10, 6, 1.2], [12, 10, 1.5], [14, 14, 1.8], [16, 18, 2.2], [18, 24, 2.6]].map(([scuttlers, skitterers, hpScale]) => ({
+    // [scuttlers, skitterers, hp scale, shellbacks] per wave
+    waves: [[8, 0, 1, 0], [10, 6, 1.2, 0], [11, 10, 1.5, 1], [12, 14, 1.8, 2], [14, 18, 2.2, 2], [15, 24, 2.6, 3]].map(([scuttlers, skitterers, hpScale, shellbacks]) => ({
       hpScale: hpScale * 1.25,
       groups: [
         { type: 'scuttler', count: scuttlers, interval: 1.3 },
+        ...(shellbacks ? [{ type: 'shellback', count: shellbacks, interval: 2.4 }] : []),
         ...(skitterers ? [{ type: 'skitterer', count: skitterers, interval: 0.55 }] : []),
       ],
     })),

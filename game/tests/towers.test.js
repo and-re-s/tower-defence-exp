@@ -120,7 +120,7 @@ test('waves: skitterers are faster than scuttlers; calling early pays more the e
   assert.equal(g.snapshot().waveCount, 6);
   const types = new Set();
   for (const w of g.level.def.waves) for (const gr of w.groups) types.add(gr.type);
-  assert.deepEqual([...types].sort(), ['scuttler', 'skitterer']);
+  assert.deepEqual([...types].sort(), ['scuttler', 'shellback', 'skitterer']);
   void TICK;
 });
 
@@ -326,4 +326,59 @@ test('B-009: sell refunds are exact at 70% (no float error)', () => {
   const g = new Game();
   g.start({ level: 1, seed: 1 });
   for (const [spent, refund] of Object.entries(want)) assert.equal(g.sellValue({ spent: Number(spent) }), refund);
+});
+
+function lone(type, tower) {
+  const g = new Game();
+  g.start({ level: 1, seed: 1 });
+  g.salvage = 1000;
+  g.hpScale = 1;
+  g.spawnEnemy(type);
+  const e = g.enemies[0];
+  e.s = 6;
+  if (tower) {
+    const p = { x: e.x, z: e.z };
+    const spot = g.level.tiles.filter((t) => ['grass', 'sand'].includes(t.terrain))
+      .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+    g.build(tower, spot.q, spot.r);
+  }
+  g.phase = 'done';
+  return { g, e };
+}
+
+test('B-010: an enemy in a bell radius moves at 60% speed for 2 s after a pulse, then recovers', () => {
+  const { g, e } = lone('scuttler', 'bell');
+  const base = lone('scuttler').e;
+  const ref = lone('scuttler').g;
+  for (let i = 0; i < 30; i++) { g.tick(); ref.tick(); }
+  assert.ok(g.enemies[0].slowUntil > g.time, 'pulse should have landed');
+  const s0 = g.enemies[0].s;
+  const r0 = ref.enemies[0].s;
+  for (let i = 0; i < 60; i++) { g.tick(); ref.tick(); }
+  const ratio = (g.enemies[0].s - s0) / (ref.enemies[0].s - r0);
+  assert.ok(ratio > 0.55 && ratio < 0.65, `ratio ${ratio}`);
+  assert.equal(g.snapshot().enemies[0].speedFactor, 0.6);
+  void e; void base;
+});
+
+test('B-010: harpoons do half damage to a Shellback, cannons full damage', () => {
+  const { g, e } = lone('shellback');
+  const hp = e.hp;
+  g.hitEnemy(e, 10, true);
+  assert.equal(hp - e.hp, 5);
+  g.hitEnemy(e, 10, false);
+  assert.equal(hp - e.hp, 15);
+  const sc = lone('scuttler');
+  sc.g.hitEnemy(sc.e, 10, true);
+  assert.equal(sc.e.maxHp - sc.e.hp, 10);
+  assert.equal(g.snapshot().enemies[0].type, 'shellback');
+});
+
+test('B-010: the bell sells, upgrades its slow and pulses emit events', () => {
+  const { g } = lone('scuttler', 'bell');
+  const t = g.towers[0];
+  assert.equal(g.upgrade(t.id).ok, true);
+  assert.equal(g.snapshot().towers[0].slow, 0.5);
+  for (let i = 0; i < 30; i++) g.tick();
+  assert.ok(g.drainEvents().some((ev) => ev.type === 'bellPulse'));
 });

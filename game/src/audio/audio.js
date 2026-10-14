@@ -187,6 +187,18 @@ const SOUNDS = {
     noise(0.45, { freq: 1200, vol: 0.28, kind: 'lowpass' });
     noise(0.3, { freq: 3500, kind: 'highpass', vol: 0.08, delay: 0.05 }); // spray and rubble
   },
+  bell_ring() {
+    // deep tide bell: bronze partials with a slow wobble and a wet low swell
+    [[392, 0.16], [784 * 1.004, 0.08], [1176, 0.045], [1570, 0.025]].forEach(([f, v]) => tone(f, 1.5, { vol: v, attack: 0.004 }));
+    tone(196, 1.2, { type: 'triangle', vol: 0.08, slideTo: 188 });
+    noise(0.5, { freq: 500, vol: 0.05, kind: 'lowpass', delay: 0.05 });
+  },
+  armor_hit() {
+    const k = vary();
+    tone(95 * k, 0.12, { type: 'square', vol: 0.09, slideTo: 55 }); // low crunch
+    noise(0.1, { freq: 700, vol: 0.2, kind: 'lowpass' });
+    noise(0.05, { freq: 5200, q: 4, kind: 'bandpass', vol: 0.1 }); // metallic spark
+  },
   enemy_hit() {
     const k = vary();
     noise(0.04, { freq: 2600 * k, q: 3, kind: 'bandpass', vol: 0.12 }); // wet click

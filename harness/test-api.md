@@ -30,7 +30,7 @@ It reports the real game and changes nothing about gameplay. Wait for `__game.re
 - `path`: `[{q,r}]` hexes from the beach hex to the lighthouse hex (last). `lighthouse`: `{q,r,x,z}`.
 - `terrainCounts`: tiles per terrain (sand, grass, rock, path, shallows); `heights`: distinct tile heights.
 - `kills`; `tiles`: `[{q, r, terrain, height, tower}]` (tower = tower id or 0); `towers`: `[{id, type, q, r, tier, range (hexes, +1 on rock), terrain, targetId, targeting, damage, rate, upgradeCost (0 at max), sellValue, spent, angleDeg}]`; `projectiles`: `[{id, kind ('bolt'|'shell'), towerId, targetId, x, z}]`.
-- `enemies`: `[{id, type (scuttler|skitterer), hp, maxHp, x, z, progress}]` world position and 0..1 progress along the path.
+- `enemies`: `[{id, type (scuttler|skitterer|shellback), hp, maxHp, x, z, progress, slowed, speedFactor}]` world position, 0..1 progress along the path; `slowed` true for 2 s after a Tide Bell pulse (`speedFactor` 0.6 = moving at 60%). Towers of type `bell` have `slow` (0.4/0.5/0.6) and damage 0; `build('bell', q, r)` costs 70. Shellbacks spawn in level 1 waves 3-6 (`skipToWave(6)`); audioLog ids `bell_ring`, `armor_hit`. `camera.yawDeg` is 0..359.
 - `camera`: `{yawDeg, zoom (0 close .. 1 full island), pan:[x,z]}` (targets, not eased values); `muted`; `audio`: `{muted, running}` (running = AudioContext unlocked by a gesture).
 
 Notes: tile centers are `x = 1.5q`, `z = sqrt(3)(r + q/2)`; tile top heights are in `heights`.

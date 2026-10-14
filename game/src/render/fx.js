@@ -30,6 +30,16 @@ export function createFx(scene) {
     scene.add(f.ring, f.dome);
     flashes.push({ f, age: 0, life, radius });
   }
+  // Bell rings: a flat teal ring that grows to exactly the bell's radius.
+  const rings = [];
+  const ringFree = [];
+  function bellRing(x, y, z, radius) {
+    const r = ringFree.pop() || new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: PAL.shallows, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    r.position.set(x, y + 0.12, z);
+    r.renderOrder = 9;
+    scene.add(r);
+    rings.push({ r, age: 0, radius });
+  }
   const parts = [];
   const free = [];
   let lastTime = 0;
@@ -71,10 +81,24 @@ export function createFx(scene) {
     },
     /** Sand chips thrown up when a tower is sold. */
     chips(x, y, z) { burst('debris', x, y + 0.3, z, 12, 2.0, 1.4, Math.floor(z * 9)); },
+    bellRing,
+    /** White-hot sparks for a hit that armor mostly shrugged off. */
+    spark(x, z) { burst('hit', x, 0.7, z, 7, 2.6, 0.9, Math.floor(x * 17)); burst('fire', x, 0.7, z, 4, 2.0, 0.8, Math.floor(z * 5)); },
+    /** One drip of Shallows tint behind a slowed enemy. */
+    trail(x, z) { spawn('glow', x, 0.25, z, 0, 0.3, 0, 0.5, 1.1); },
     kill(x, z) { burst('glow', x, 0.4, z, 12, 2.1, 1, Math.floor(z * 11)); },
     update(time) {
       const dt = Math.max(0, Math.min(0.5, time - lastTime));
       lastTime = time;
+      for (let i = rings.length - 1; i >= 0; i--) {
+        const g = rings[i];
+        g.age += dt;
+        const u = g.age / 0.7;
+        if (u >= 1) { scene.remove(g.r); ringFree.push(g.r); rings.splice(i, 1); continue; }
+        const e = 1 - (1 - u) ** 2;
+        g.r.scale.setScalar(Math.max(0.01, g.radius * e));
+        g.r.material.opacity = 0.45 * (1 - u);
+      }
       for (let i = flashes.length - 1; i >= 0; i--) {
         const fl = flashes[i];
         fl.age += dt;
@@ -107,6 +131,8 @@ export function createFx(scene) {
       parts.length = 0;
       for (const fl of flashes) { scene.remove(fl.f.ring, fl.f.dome); flashFree.push(fl.f); }
       flashes.length = 0;
+      for (const g of rings) { scene.remove(g.r); ringFree.push(g.r); }
+      rings.length = 0;
     },
     count: () => parts.length,
   };

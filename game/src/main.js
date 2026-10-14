@@ -28,9 +28,9 @@ const root = document.getElementById('app');
 const game = new Game();
 const stage = createStage(root);
 const rig = createCameraRig(stage.camera, stage.renderer.domElement);
-const enemyView = createEnemyView(stage.scene);
 const towerView = createTowerView(stage.scene);
 const fx = createFx(stage.scene);
+const enemyView = createEnemyView(stage.scene, fx);
 const projectileView = createProjectileView(stage.scene, fx);
 
 const previewLevel = buildLevel(1);
@@ -138,7 +138,8 @@ function handleEvents() {
       case 'sell': audio.play('sell', game.time); fx.chips(ev.x, ev.y, ev.z); break;
       case 'refuse': audio.play('refuse', game.time); break;
       case 'fire': audio.play(ev.towerType === 'cannon' ? 'cannon_fire' : 'harpoon_fire', game.time); towerView.onFire(ev.towerId, anim); if (ev.towerType === 'cannon') muzzleSmoke(ev.towerId); break;
-      case 'hit': audio.play('enemy_hit', game.time); fx.hit(ev.x, ev.z); break;
+      case 'hit': audio.play(ev.armored ? 'armor_hit' : 'enemy_hit', game.time); if (ev.armored) fx.spark(ev.x, ev.z); else fx.hit(ev.x, ev.z); break;
+      case 'bellPulse': audio.play('bell_ring', game.time); fx.bellRing(ev.x, ev.y, ev.z, ev.radius); break;
       case 'explode': audio.play('cannon_boom', game.time); fx.explosion(ev.x, ev.z, ev.radius); break;
       case 'kill': audio.play('enemy_death', game.time); fx.kill(ev.x, ev.z); break;
       case 'leak': audio.play('lighthouse_hit', game.time); ui.pulse(); flickerAt = anim; break;
@@ -241,6 +242,7 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Space') { e.preventDefault(); if (game.screen === 'playing' && game.callNextWave() >= 0) handleEvents(); }
     else if (e.code === 'Digit1') buildSelected('harpoon');
     else if (e.code === 'Digit2') buildSelected('cannon');
+    else if (e.code === 'Digit3') buildSelected('bell');
     else if (e.code === 'Escape') deselect();
   }
 });

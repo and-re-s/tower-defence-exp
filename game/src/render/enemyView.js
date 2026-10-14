@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
+import { buildShellback } from './shellbackModel.js';
 import { worldToHex, hexKey } from '../sim/hex.js';
 
 const MODEL_SCALE = 1.35;
@@ -13,6 +14,7 @@ function makeKit() {
     shell: new THREE.MeshStandardMaterial({ color: 0x2a2a3e, flatShading: true, roughness: 0.55 }),
     shell2: new THREE.MeshStandardMaterial({ color: 0x1d3157, flatShading: true, roughness: 0.5 }),
     glow: new THREE.MeshStandardMaterial({ color: 0x0b3a33, emissive: PAL.brine, emissiveIntensity: 2.2, flatShading: true }),
+    slowPool: new THREE.MeshBasicMaterial({ color: PAL.shallows, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }),
     pool: new THREE.MeshBasicMaterial({ color: PAL.brine, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false }),
   };
   const body = new THREE.IcosahedronGeometry(0.5, 0);
@@ -26,6 +28,8 @@ function makeKit() {
   claw.rotateX(Math.PI / 2);
   claw.translate(0, 0, 0.11);
   const pool = new THREE.CircleGeometry(0.4, 16);
+  const slowRing = new THREE.RingGeometry(0.42, 0.62, 18);
+  slowRing.rotateX(-Math.PI / 2);
   pool.rotateX(-Math.PI / 2);
   // Skitterer: a long thin shrimp, built from a chain of small segments.
   const seg = new THREE.IcosahedronGeometry(0.5, 0);
@@ -39,7 +43,7 @@ function makeKit() {
   sleg.translate(0.075, 0, 0);
   mats.shrimp = new THREE.MeshStandardMaterial({ color: 0x4a3358, flatShading: true, roughness: 0.5 });
   mats.shrimpBelly = new THREE.MeshStandardMaterial({ color: PAL.apricot, flatShading: true, roughness: 0.6 });
-  return { mats, geos: { body, carapace, spot, leg, claw, pool, seg, tail, feeler, sleg } };
+  return { mats, geos: { slowRing, body, carapace, spot, leg, claw, pool, seg, tail, feeler, sleg } };
 }
 
 function buildScuttler(kit) {
@@ -126,7 +130,7 @@ function buildSkitterer(kit) {
 }
 
 /** Maintains one model per simulated enemy and animates it on game time. */
-export function createEnemyView(scene) {
+export function createEnemyView(scene, fx) {
   const kit = makeKit();
   const views = new Map();
   const dying = [];
@@ -165,12 +169,23 @@ export function createEnemyView(scene) {
           alive.add(e.id);
           let v = views.get(e.id);
           if (!v) {
-            v = { model: e.type === 'skitterer' ? buildSkitterer(kit) : buildScuttler(kit), last: e };
+            v = { model: e.type === 'skitterer' ? buildSkitterer(kit) : e.type === 'shellback' ? buildShellback() : buildScuttler(kit), last: e, trailAt: 0 };
+            v.model.slow = new THREE.Mesh(kit.geos.slowRing, kit.mats.slowPool);
+            v.model.slow.position.y = 0.04;
+            v.model.slow.visible = false;
+            v.model.group.add(v.model.slow);
             scene.add(v.model.group);
             views.set(e.id, v);
           }
           v.last = { id: e.id, x: e.x, z: e.z, heading: e.heading };
           pose(v, e, level, time, game.time);
+          // Slowed enemies wear a Shallows ring and leave a trail of teal drips.
+          const slowed = game.time < e.slowUntil;
+          v.model.slow.visible = slowed;
+          if (slowed) {
+            v.model.slow.scale.setScalar(1 + 0.12 * Math.sin(time * 6 + e.id));
+            if (fx && game.time - v.trailAt > 0.12) { v.trailAt = game.time; fx.trail(e.x, e.z); }
+          }
         }
       }
       for (const [id, v] of views) {

@@ -6,6 +6,7 @@ const WAVE_SVG = `<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M2 15 Q6 
 const TOWER_ICONS = {
   harpoon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M17 36 L19 14 H23 L25 36 Z" fill="#b08a4e"/><path d="M11 37 H31 L29 33 H13 Z" fill="#5a4527"/><rect x="13" y="11" width="16" height="4" rx="1" fill="#5a4527"/><path d="M21 3 L25 11 H17 Z" fill="#f4ecd8"/><rect x="20" y="9" width="2" height="4" fill="#f4ecd8"/><path d="M26 14 V6 L32 9 Z" fill="#ffb23e"/></svg>`,
   cannon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 36 L9 24 H31 L34 36 Z" fill="#4a4f5c"/><path d="M9 24 H31 L29 21 H11 Z" fill="#6c7282"/><g transform="rotate(-32 20 20)"><rect x="12" y="13" width="22" height="10" rx="3" fill="#2f3340"/><rect x="29" y="11" width="6" height="14" rx="2" fill="#6c7282"/><rect x="18" y="12" width="3" height="12" fill="#ffb23e"/></g><circle cx="10" cy="19" r="4" fill="#2e8c94" opacity="0.8"/></svg>`,
+  bell: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="9" width="3" height="27" fill="#5a4527"/><rect x="30" y="9" width="3" height="27" fill="#5a4527"/><rect x="6" y="8" width="28" height="4" rx="1" fill="#5a4527"/><path d="M20 12 V15" stroke="#c9893a" stroke-width="2"/><path d="M14 30 Q14 17 20 15 Q26 17 26 30 Z" fill="#c9893a"/><rect x="13" y="29" width="14" height="3" rx="1.5" fill="#ffb23e"/><circle cx="20" cy="34" r="2" fill="#2e8c94"/><path d="M3 38 Q10 33 20 38 T37 38" fill="none" stroke="#2e8c94" stroke-width="2" opacity="0.8"/></svg>`,
 };
 
 function el(html) {

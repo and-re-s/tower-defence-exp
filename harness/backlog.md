@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-042 · fix · todo · S — Round 06 minor bugs bundle
+### B-042 · fix · review · S — Round 06 minor bugs bundle
 Found: round-06 (minor)
 Repro/Done when:
 - hovering an occupied hex (tower base) shows the same amber outline as a buildable hex (hover-occupied.jpg); use a distinct "select" cue (e.g. brighter ring/pointer) or none, so amber still means "you can build here";
@@ -21,7 +21,7 @@ Repro/Done when:
 
 
 
-### B-009 · M1 · todo · M — Select a tower: upgrade, sell, targeting
+### B-009 · M1 · review · M — Select a tower: upgrade, sell, targeting
 Failed round-06: "Done when" line 2 (refund 70%): cannon (90) sells for 62 instead of 63 and a tier-2 cannon (170 spent) for 118 instead of 119, because `Math.floor(spent * 0.7)` hits floating point (90*0.7 = 62.999...). Repro: `start({level:1,seed:1}); grantSalvage(500); const id=build('cannon',0,-1).id; sell(id)` returns refund 62. Fix: round with an epsilon (e.g. `Math.floor(spent*7/10)`) and re-check 50, 90, 110, 140, 170, 200, 290. Everything else (tier/damage/rate, tier 3 max, targeting strongest, panel placement, Esc/right click) was verified and need not be rebuilt.
 Why: depth through investment decisions; the decision stays on the map.
 Behavior: Clicking a tower selects it: its range ring appears and a small panel anchored next to it shows its stats, "Upgrade for N" (tiers 2 and 3, each visibly taller or more ornate), targeting priority (first / strongest / closest) and "Sell for N" (70% refund). Esc or right click deselects.
@@ -31,7 +31,7 @@ Done when:
 - switching targeting to "strongest" makes the tower target the highest-hp enemy in range (check the target id in `state()`);
 - the panel never covers the selected tower and stays on screen at the island edges.
 
-### B-010 · M1 · todo · M — Tide Bell and the Shellback
+### B-010 · M1 · review · M — Tide Bell and the Shellback
 Why: counter-choices — armor punishes harpoon spam, slows set up the cannon.
 Behavior: The Tide Bell (cost 70) is an open arch with a bell that rings every 2 s, sending an expanding ring that slows ground enemies within 2.5 hexes by 40% for 2 s (slowed enemies show a Shallows-tinted trail). The Shellback (tall hermit shell, 120 hp, slow) takes 50% less damage from harpoons; armored hits spark and make a lower crunch.
 Done when:

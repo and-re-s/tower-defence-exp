@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PAL } from './palette.js';
+import { buildTideBell, BELL_HEIGHT } from './bellModel.js';
 
 const DROP_TIME = 0.5;
 const RECOIL_TIME = 0.35;
@@ -8,7 +9,7 @@ const TOWER_SCALE = 1.5;
 export const MUZZLE_HEIGHT = 1.62 * TOWER_SCALE;
 const CANNON_SCALE = 1.9;
 export const CANNON_MUZZLE_HEIGHT = 1.0 * CANNON_SCALE;
-export const muzzleHeight = (type) => (type === 'cannon' ? CANNON_MUZZLE_HEIGHT : MUZZLE_HEIGHT);
+export const muzzleHeight = (type) => (type === 'cannon' ? CANNON_MUZZLE_HEIGHT : type === 'bell' ? BELL_HEIGHT : MUZZLE_HEIGHT);
 const easeOutBack = (t) => 1 + 2.70158 * (t - 1) ** 3 + 1.70158 * (t - 1) ** 2;
 
 function makeKit() {
@@ -183,7 +184,7 @@ export function createTowerView(scene) {
         alive.add(t.id);
         let v = views.get(t.id);
         if (!v) {
-          v = { m: (t.type === 'cannon' ? buildCliffCannon : buildHarpoonPost)(kit), yaw: t.angle };
+          v = { m: (t.type === 'cannon' ? buildCliffCannon : t.type === 'bell' ? buildTideBell : buildHarpoonPost)(kit), yaw: t.angle };
           v.m.root.position.set(t.x, t.y, t.z);
           scene.add(v.m.root);
           views.set(t.id, v);
@@ -207,6 +208,13 @@ export function createTowerView(scene) {
           const d = (age - 0.12) / 0.58;
           ring.scale.setScalar(0.5 + d * 1.1);
           ring.material.opacity = 0.55 * (1 - d);
+        }
+        if (v.m.swing) {
+          // Bell: a damped swing after each pulse, a faint sway when idle.
+          const ps = game.time - (t.pulsedAt ?? -100);
+          const ring = ps >= 0 && ps < 1.2 ? Math.exp(-ps * 3) * Math.sin(ps * 22) * 0.55 : 0;
+          v.m.swing.rotation.z = ring + Math.sin(time * 1.3 + t.id) * 0.03;
+          continue;
         }
         let diff = t.angle - v.yaw;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));

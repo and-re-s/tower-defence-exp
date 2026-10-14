@@ -47,3 +47,11 @@ Decisions: upgrade costs harpoon 60/90, cannon 80/120 (salvage sink); tiers rais
 Known issues: panel overlaps the beam wedge visually; no keyboard shortcuts for upgrade; level 1 not retuned for upgrades (bot tests unchanged, still pass).
 Tried and reverted: nothing.
 How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('cannon',0,-1)`, click `toScreen(0,2.2,-1.732)` -> `#tower-panel` opens; `upgrade(1)`, `setTargeting(1,'strongest')`, `sell(1)` (`state().towers` has tier/damage/sellValue). npm test has 4 new tests.
+
+## Round 07
+Items: B-042 -> review, B-009 -> review (refund fix), B-010 -> review
+Changes: Tide Bell (70, key 3, bar icon): bronze bell in a timber arch that swings and sends a teal ring every 2 s while enemies are in 2.5 hexes; slowed enemies (60% speed, 2 s) wear a teal ring and drip trail. Shellback (hermit crab with a spiral shell, 120 hp, speed 0.6, leak 2) takes half harpoon damage, full cannon damage; armored hits give white sparks and a low crunch. Sell refunds are exact (63, 119...). Hovering an occupied hex shows a pale cue (not amber); zoom reaches much closer; yawDeg is 0..359; upgrade sparkle is bigger.
+Decisions: bell tiers deepen the slow (40/50/60%, upgrades 50/85) since it deals no damage; its panel hides targeting. Shellbacks (1,2,2,3) join level 1 waves 3-6 so they can be seen now (spec puts them on level 2); their hp scales at half the wave rate; tuning tests still pass.
+Known issues: bell ring is only tested by screenshot in the smoke path; no Saltmarsh yet so shellback card/tips are B-023; bell range ring preview uses the same amber ring.
+Tried and reverted: shellbacks 2..5 per wave with full hp scaling made 6 posts lose.
+How to test: `start({level:1,seed:1}); pause(); grantSalvage(500); build('bell',q,r)` next to the path, `skipToWave(3)`, step and read `enemies[].slowed/speedFactor`; `skipToWave(6)` + step 60*24 for shellbacks; `audioLog()` has bell_ring / armor_hit. npm test has 4 new tests.

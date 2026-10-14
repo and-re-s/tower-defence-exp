@@ -252,9 +252,10 @@ export class Game {
   }
 
   /** Applies damage; a kill removes the enemy and pays its reward. */
-  hitEnemy(e, damage) {
-    e.hp = Math.max(0, e.hp - damage);
-    this.events.push({ type: 'hit', id: e.id, x: e.x, z: e.z });
+  hitEnemy(e, damage, piercing = false) {
+    const armor = piercing ? ENEMY_TYPES[e.type].armor || 0 : 0;
+    e.hp = Math.max(0, e.hp - damage * (1 - armor));
+    this.events.push({ type: 'hit', id: e.id, x: e.x, z: e.z, armored: armor > 0 });
     if (e.hp > 0) return;
     const reward = ENEMY_TYPES[e.type].reward;
     this.salvage += reward;
@@ -280,8 +281,9 @@ export class Game {
 
   spawnEnemy(type) {
     const stats = ENEMY_TYPES[type];
-    const hp = Math.round(stats.hp * this.hpScale);
-    const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0 };
+    // Armored types scale at half rate: they are already tough against harpoons.
+    const hp = Math.round(stats.hp * (stats.armor ? 1 + (this.hpScale - 1) * 0.5 : this.hpScale));
+    const e = { id: this.nextId++, type, hp, maxHp: hp, s: 0, x: 0, z: 0, heading: 0, born: this.time, incoming: 0, slow: 0, slowUntil: -1 };
     pointOnPath(this.level, 0, e);
     this.enemies.push(e);
     this.events.push({ type: 'spawn', id: e.id, enemyType: type });
@@ -292,7 +294,8 @@ export class Game {
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i];
       const stats = ENEMY_TYPES[e.type];
-      e.s += stats.speed * SQRT3 * TICK;
+      const slow = this.time < e.slowUntil ? 1 - e.slow : 1;
+      e.s += stats.speed * slow * SQRT3 * TICK;
       if (e.s >= lvl.pathLength) {
         this.light -= stats.leak;
         this.lastLeakTime = this.time;
@@ -351,6 +354,7 @@ export class Game {
       projectiles: this.projectiles.map((p) => ({ id: p.id, kind: p.kind || 'bolt', towerId: p.towerId, targetId: p.targetId, x: round(p.x), z: round(p.z) })),
       enemies: this.enemies.map((e) => ({
         id: e.id, type: e.type, hp: round(e.hp, 2), maxHp: e.maxHp, x: round(e.x), z: round(e.z), progress: round(e.s / lvl.pathLength),
+        slowed: this.time < e.slowUntil, speedFactor: this.time < e.slowUntil ? round(1 - e.slow, 2) : 1,
       })),
     });
     return out;
