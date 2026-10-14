@@ -24,3 +24,4 @@ One line per item.
 - B-045 · M0 · S — Round 09 minor bugs bundle — done round-10 (ffb34c9)
 - B-013 · M1 · S — Pause menu, game speed and hotkeys — done round-10 (ffb34c9)
 - B-014 · M1 · M — From dusk to night across the waves — done round-10 (ffb34c9)
+- B-015 · M1 · M — Broodmother and Gloom Gulls — done round-11 (2f6c0e0)

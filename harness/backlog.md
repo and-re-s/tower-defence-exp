@@ -7,15 +7,17 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-046 · fix · review · S — Sky dome shader does not compile (no sky, no stars, GL errors every frame)
+### B-046 · fix · todo · S — Sky dome shader does not compile (no sky, no stars, GL errors every frame)
 Found: round-10 (major)
+Failed round-11: line 1 passes (no WebGLProgram error or useProgram warning on title, level, night; console 0 errors). Line 2 fails: at night (skipToWave(6), step(600), daylight 0.999) at zoom 0, 0.6, 1 and panned north, no sky gradient, stars or dome are visible anywhere (round-11/night.jpg, night-close.jpg, night-pan.jpg: only dark-blue fog and sea), and progress.md/spec still claim a sky dome and stars. Either make the sky visible from a reachable camera (e.g. stars as points in the fog-free band above the sea, or a horizon gradient) or remove the dome and the claims.
 Repro: open http://localhost:4173/ and read the console: `THREE.WebGLProgram: Shader Error ... ERROR: 0:160: '#' : invalid character` for the ShaderMaterial in src/render/daylight.js line 40, followed by `WebGL: INVALID_OPERATION: useProgram: program not valid` on every frame until "too many errors". The `#include <colorspace_fragment>` sits on the same line after `gl_FragColor = ...;`, so the preprocessor directive is not at the start of a line.
 Done when:
 - the console shows no THREE.WebGLProgram error and no useProgram warnings on the title, in a level and at night;
 - the sky dome and stars are actually rendered (a screenshot of the night with the camera zoomed in/out shows the gradient and stars, or the dome is visible somewhere), or the dome is removed and the spec/progress claims are dropped.
 
-### B-047 · fix · review · S — Round 10 minor bugs bundle
+### B-047 · fix · todo · S — Round 10 minor bugs bundle
 Found: round-10 (minor)
+Failed round-11: only the golden-hour line still fails. 02-start.jpg: the background and sea at wave 1 are dark mauve/purple-navy, nothing reads golden or warm (tiles are warm, the sea and fog are not). Verified in round 11: chips fit at 400x700 and 500x350 (preview chip inside, icon-only), night towers are readable, pause menu ignores scene clicks, F, 1 and Space, Mistwalker ripple is coral/violet and distinct from the spawn rings. Remaining Done when: sea and fog at timeOfDay 0 are visibly warm (amber/peach horizon haze, lighter warm-tinted shallows) in 02-start.jpg.
 Repro/Done when:
 - at 400x700 the next-wave preview chip is clipped by the right edge (preview-chip rect right 433 in a 400 px viewport; vp-400x700.jpg), at 500x350 it collapses to an icon with "8"; HUD chips must fit or wrap inside the viewport;
 - at night (waves 5-6) Harpoon Posts and the cannon are near-black silhouettes against dark tiles (03-busy.jpg); give towers a rim or ambient lift so they are readable at a glance;
@@ -26,14 +28,6 @@ Repro/Done when:
 ## M1 — full core
 
 
-
-### B-015 · M1 · review · M — Broodmother and Gloom Gulls
-Why: varied situations — burst threats and an air route that ignores the path.
-Behavior: The Broodmother (huge brood crab, slow, 220 hp) splits into 4 Skitterers when killed. Gloom Gulls fly at a fixed height straight from their spawn to the lighthouse, ignoring the path; only Harpoon Posts, lantern burn (and later the beam) can hurt them; cannons and bells ignore them.
-Done when:
-- killing a Broodmother adds 4 Skitterers at its position in `state().enemies`;
-- a gull's path is a straight line to the lighthouse (positions in `state()`), and cannons and bells never target it while harpoons do;
-- both are visually distinct from the default camera (gulls cast a shadow on the tiles below them).
 
 ---
 
