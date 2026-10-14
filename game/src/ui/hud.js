@@ -67,8 +67,9 @@ export function createHud(ui, hudRow, game, actions) {
         waveVal.textContent = game.wave;
         waveMax.textContent = game.level.def.waves.length;
         waveLabel.textContent = game.phase === 'breather' ? `Next in ${Math.ceil(game.breatherLeft)}s` : game.phase === 'done' ? 'Cleared' : 'Wave';
-        const showNext = game.screen === 'playing' && game.phase === 'breather';
+        const showNext = inGame && game.phase === 'breather';
         nextBtn.classList.toggle('hidden', !showNext);
+        nextBtn.disabled = game.screen === 'paused';
         if (showNext) nextBtn.innerHTML = `Next wave <span class="bonus">+${Math.round(game.breatherLeft * 1.5)}</span> <kbd>Space</kbd>`;
       }
       if (!inGame && menuHex) this.closeMenu();

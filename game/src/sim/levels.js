@@ -23,7 +23,7 @@ export const LEVELS = {
     firstBreather: 20,
     breather: 12,
     // [scuttlers, skitterers, hp scale] per wave
-    waves: [[8, 0, 1], [10, 6, 1.2], [12, 10, 1.5], [14, 14, 1.9], [16, 18, 2.4], [18, 24, 3]].map(([scuttlers, skitterers, hpScale]) => ({
+    waves: [[8, 0, 1], [10, 6, 1.2], [12, 10, 1.5], [14, 14, 1.8], [16, 18, 2.2], [18, 24, 2.6]].map(([scuttlers, skitterers, hpScale]) => ({
       hpScale: hpScale * 1.25,
       groups: [
         { type: 'scuttler', count: scuttlers, interval: 1.3 },

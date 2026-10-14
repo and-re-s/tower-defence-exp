@@ -76,7 +76,7 @@ export function createUI(root, game, actions) {
           endSub.innerHTML = `The tide took the island on wave <b>${game.wave}</b>.`;
         } else if (s === 'won') {
           endTitle.textContent = 'The light holds';
-          endSub.innerHTML = `Light left: <b>${game.light}</b> / ${game.lightMax}`;
+          endSub.innerHTML = `Light left: <b>${game.light} <span class="of">/ ${game.lightMax}</span></b>`;
         }
       }
       if (game.light !== shownLight) {

@@ -127,7 +127,8 @@ export class Game {
   skipToWave(n) {
     if (this.screen !== 'playing' && this.screen !== 'paused') return false;
     const count = this.level.def.waves.length;
-    const target = Math.max(1, Math.min(count, Math.floor(Number(n) || 1)));
+    const target = Math.floor(Number(n));
+    if (!(target >= 1 && target <= count)) return false;
     this.enemies = [];
     this.projectiles = [];
     for (const t of this.towers) t.targetId = 0;

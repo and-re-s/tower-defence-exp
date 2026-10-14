@@ -133,12 +133,13 @@ function fixedLayout(n, seed = 1) {
   return g;
 }
 
-test('tuning: a mediocre layout built once loses, a strong one still leaks', () => {
+test('tuning: a mediocre layout built once loses, six posts squeak through, no cliff', () => {
   assert.equal(fixedLayout(3).screen, 'lost');
-  assert.equal(fixedLayout(6).screen, 'lost');
-  const eight = fixedLayout(8);
-  assert.equal(eight.screen, 'won');
-  assert.ok(eight.light < 20, 'eight posts should leak at least once');
+  assert.equal(fixedLayout(5).screen, 'lost');
+  const six = fixedLayout(6);
+  assert.equal(six.screen, 'won');
+  assert.ok(six.light >= 3 && six.light < 20, `six posts should end with a few Light, got ${six.light}`);
+  assert.equal(fixedLayout(8).screen, 'won');
 });
 
 test('test helpers: skipToWave, win and lose', () => {
@@ -147,7 +148,10 @@ test('test helpers: skipToWave, win and lose', () => {
   assert.equal(g.skipToWave(3), true);
   assert.equal(g.wave, 3);
   assert.equal(g.phase, 'wave');
-  assert.equal(g.skipToWave(99), true);
+  assert.equal(g.skipToWave(99), false);
+  assert.equal(g.skipToWave(0), false);
+  assert.equal(g.wave, 3);
+  assert.equal(g.skipToWave(6), true);
   assert.equal(g.wave, g.level.def.waves.length);
   assert.equal(g.forceWin(), true);
   assert.equal(g.screen, 'won');
