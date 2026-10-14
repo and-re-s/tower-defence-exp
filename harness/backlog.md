@@ -7,11 +7,13 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-040 · fix · review · S — Round 04 minor bugs bundle
-Found: round-04 (minor)
+### B-041 · fix · todo · S — Round 05 minor bugs bundle
+Found: round-05 (minor)
 Repro/Done when:
-- with `start({level:1,seed:1}); pause();` the "Next wave" button is disabled but Space still calls the wave (wave 0 -> 1, phase `wave`) while paused; make both consistent (Space also ignored while paused, or button enabled);
-- `setTimeScale(16)` then `start()` or Play from the menu keeps `timeScale` 16 in `state()`; reset it to 1 on start/Retry/Play.
+- with a cannon on (0,-1): `start({level:1,seed:1}); pause(); build('cannon',0,-1)`, click at screen (640,300) (on the cannon body): the build menu opens for the hex BEHIND it (0,-2) and picking Harpoon Post builds there; clicking the visible body of a tower must resolve to the tower's own hex (or be ignored/refused until B-009 selection), never the hex behind it;
+- hovering/clicking an occupied hex must not open "Build here" (refuse or, later, select);
+- the armed type from the tower bar survives `start()`/Retry (cannon still highlighted and its ring used after a restart); reset to Harpoon Post on start, or make the menu hover state consistent with the armed type;
+- a cannon shell's explosion is hardly visible at the default camera (boom2.jpg, 4 ticks after `cannon_boom`): make the blast burst readable (bigger flash/ring/debris, visible for about 0.4 s).
 
 
 
@@ -20,14 +22,6 @@ Repro/Done when:
 ## M1 — full core
 
 
-### B-008 · M1 · review · M — Cliff Cannon and the high-ground rule
-Why: pillar "The island is the board"; the first real tower choice (single target vs splash).
-Behavior: A second tower, the Cliff Cannon (cost 90): a squat basalt tower with a barrel that lobs an arcing shell with a smoke trail; it explodes in a 1.2-hex blast damaging every ground enemy inside. It can't hit enemies closer than 1.5 hexes. Every tower on a rock tile gets +1 hex range. A tower bar at the bottom shows both towers with icons, costs and hotkeys 1–2.
-Done when:
-- one cannon shell damages several enemies at once when they are clustered (hp drops for 2+ enemies on the same tick in `state()`);
-- the cannon never fires at an enemy within 1.5 hexes;
-- a tower's range in `state().towers` is 1 higher on rock than on sand, and the range ring shows it;
-- the cannon's silhouette is clearly different from the Harpoon Post from the default camera, and the cannon has its own fire sound in `audioLog()`.
 
 ### B-009 · M1 · todo · M — Select a tower: upgrade, sell, targeting
 Why: depth through investment decisions; the decision stays on the map.

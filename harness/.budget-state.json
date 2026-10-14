@@ -19,28 +19,28 @@
       "updated": "2026-10-08T16:55:49.432Z"
     },
     "57a2d635-c573-5381-b358-bd4a3595d9c7": {
-      "usd": 3.103610000000001,
+      "usd": 3.785458799999999,
       "by_agent": {
-        "orchestrator": 0.216,
-        "generator": 0.8624,
-        "evaluator": 2.0251
+        "orchestrator": 0.2874,
+        "generator": 1.0792,
+        "evaluator": 2.4189
       },
       "by_model": {
-        "claude-sonnet-5-5": 3.1036
+        "claude-sonnet-5-5": 3.7855
       },
       "main_model": "claude-sonnet-5-5",
       "unknown_models": [],
       "background_capped": false,
-      "updated": "2026-10-14T12:36:33.020Z"
+      "updated": "2026-10-14T12:50:23.601Z"
     }
   },
   "checkpoints_done": [],
-  "current_round": 4,
-  "last_scored_round": 3,
+  "current_round": 5,
+  "last_scored_round": 4,
   "last_replan_round": 1,
   "spec_versions": 1,
   "stalls": 0,
-  "updated": "2026-10-14T12:36:33.025Z",
+  "updated": "2026-10-14T12:50:23.606Z",
   "armed_at": 1791978438223,
   "start_id": "start-mv81p07j",
   "session_from": {
