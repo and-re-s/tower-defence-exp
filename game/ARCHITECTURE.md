@@ -24,12 +24,13 @@ Vite + three.js, ES modules, no network. Run from `game/`: `npm run build`, `npm
   - `fx.js` pooled hit/kill particles on the anim clock. `placement.js` hex picking (a click on a tower body resolves to its own hex), hover outline, range ring.
   - `bellModel.js` Tide Bell model; `shellbackModel.js` Shellback model (both own their kit). Slowed enemies get a teal ring + drip trail (enemyView, fx.trail); `fx.bellRing`, `fx.spark`.
   - `lanternModel.js` Lantern model; `lightPool.js` instanced warm hex pool on the lit tiles; `mistwalkerModel.js` jellyfish (cloaked/lit materials); `spawnMarker.js` pulsing next-wave beach marker.
+  - `daylight.js` time-of-day keyframes (sun, hemi, fog, sea, exposure), sky dome and stars; `apply(t)`; `main.js` eases `tod` toward `game.timeOfDay` on the anim clock and scales fog with `rig.distance()`.
   - `palette.js` spec palette constants.
 - `src/audio/audio.js` the only sound module: Web Audio synth, unlock on gesture, surf ambience,
   mute (M, persisted in localStorage), `play(id, time)` also writes the `audioLog`.
-- `src/ui/` DOM overlay: `screens.js` (title, Light chip, end screen, mute button), `hud.js` (salvage/wave chips, next-wave preview chip, `#dock` with Next wave button and tower bar, build menu, floating +N bonus), `towerPanel.js` (selected-tower panel: stats, upgrade, targeting, sell), `styles.css`.
+- `src/ui/` DOM overlay: `screens.js` (title, Light chip, end screen, mute button, speed/pause buttons, pause menu), `hud.js` (salvage/wave chips, next-wave preview chip, `#dock` with Next wave button and tower bar, build menu, floating +N bonus), `towerPanel.js` (selected-tower panel: stats, upgrade, targeting, sell), `styles.css`.
 - `src/errors.js` collects window errors early. `src/testApi.js` installs `window.__game` for `?test=1`.
-- `src/main.js` wires everything (events -> audio/fx/views, build flow, hotkeys Space/1-4/Esc; `armed` tower type, tower selection via `towerPanel`): game loop (accumulator, time scale, fixed ticks), event -> audio/UI,
+- `src/main.js` wires everything (events -> audio/fx/views, build flow, hotkeys Space/1-4/F (speed)/P and Esc (pause); `armed` tower type, tower selection via `towerPanel`): game loop (accumulator, time scale, fixed ticks), event -> audio/UI,
   world rebuild per (level, seed), `ctl` object shared with the test API.
 - `tests/*.test.js` node:test simulation tests. `scripts/smoke.mjs` Playwright smoke (port 4174, writes `harness/smoke/*.png`).
 

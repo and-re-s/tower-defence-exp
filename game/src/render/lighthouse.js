@@ -88,16 +88,19 @@ export function buildLighthouse(lh) {
   return {
     group,
     /** time: game seconds; sinceHit: game seconds since the last Light loss. */
-    update(time, sinceHit) {
+    update(time, sinceHit, night = 0) {
       beamPivot.rotation.y = time * 0.9;
       let k = 1;
       if (sinceHit < 0.9) {
         // flicker: fast on/off that settles back
         k = 0.25 + 0.75 * Math.abs(Math.sin(sinceHit * 38)) * Math.min(1, sinceHit / 0.9 + 0.2);
       }
-      lampMat.emissiveIntensity = 2.4 * k;
-      light.intensity = 14 * k;
-      halo.material.opacity = 0.6 + 0.4 * k;
+      const boost = 1 + night * 0.7; // the lamp carries the scene at night
+      lampMat.emissiveIntensity = 2.4 * k * boost;
+      light.intensity = 14 * k * boost;
+      halo.material.opacity = (0.6 + 0.4 * k) * (1 + night * 0.35);
+      halo.scale.setScalar(2.6 * (1 + night * 0.4));
+      beam.scale.set(1, 1 + night * 0.25, 1 + night * 0.25);
     },
     dispose() {
       for (const d of disposables) d.dispose();

@@ -7,7 +7,7 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-045 · fix · todo · S — Round 09 minor bugs bundle
+### B-045 · fix · review · S — Round 09 minor bugs bundle
 Found: round-09 (minor)
 Repro/Done when:
 - at 400x700 (portrait) the island is not visible at all, only the lighthouse as a dot (round-09/portrait-400.jpg), and the tower bar is clipped (rect left -41, right 441 in a 400 px viewport); the camera fit must keep the whole island on screen and the bar inside the viewport at 400x700 and 500x350;
@@ -20,7 +20,7 @@ Repro/Done when:
 
 
 
-### B-013 · M1 · todo · S — Pause menu, game speed and hotkeys
+### B-013 · M1 · review · S — Pause menu, game speed and hotkeys
 Why: control and comfort; needed for every later level.
 Behavior: Esc or P opens a pause menu (Resume, Restart, Quit to menu) and freezes all motion; F or the HUD button cycles speed 1×/2×/3×; 1–4 pick a tower to place at the hovered hex; Space calls the next wave.
 Done when:
@@ -28,7 +28,7 @@ Done when:
 - speed 3× makes `time` advance about 3 times faster than 1× over the same real time; the current speed is shown in the HUD;
 - Restart from the pause menu gives a fresh run of the same level; Quit returns to the title screen with no leftover enemies or towers.
 
-### B-014 · M1 · todo · M — From dusk to night across the waves
+### B-014 · M1 · review · M — From dusk to night across the waves
 Why: pillar "Hold the light": the night is the clock, and it's the strongest image this game has.
 Behavior: The level starts at golden hour; each wave lowers the sun in eased steps through sunset and blue hour to night. At night the sun is dim and cold, the sky darkens to Deep Sea with stars, and the lighthouse lamp, lanterns and enemy glow become the main light sources. Mistwalkers appear only from dusk on.
 Done when:

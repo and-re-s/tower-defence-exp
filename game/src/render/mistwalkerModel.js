@@ -23,6 +23,9 @@ function kit() {
     litTent: mk(0x7fe0d0, PAL.brine, 1.2, 0.6),
     coreMat: new THREE.MeshBasicMaterial({ color: 0xe9fff8, transparent: true, opacity: 0.9 }),
     shadow: new THREE.MeshBasicMaterial({ color: 0x0b1a33, transparent: true, opacity: 0.28, depthWrite: false }),
+    rippleGeo: new THREE.RingGeometry(0.62, 0.74, 28).rotateX(-Math.PI / 2),
+    rippleGeo2: new THREE.RingGeometry(0.34, 0.4, 24).rotateX(-Math.PI / 2),
+    rippleMat: new THREE.MeshBasicMaterial({ color: 0x9fe8e0, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }),
     shadowGeo: new THREE.CircleGeometry(0.34, 14).rotateX(-Math.PI / 2),
   };
   return shared;
@@ -58,6 +61,11 @@ export function buildMistwalker() {
   const shadow = new THREE.Mesh(k.shadowGeo, k.shadow);
   shadow.position.y = -MISTWALKER_FLOAT / 1.3 + 0.04; // on the ground below the jelly (group scale is 1.3)
   group.add(shadow);
+  // Cue for the cloaked state: a faint pair of ground ripples, so something coming can be seen but not targeted.
+  const ripple = new THREE.Mesh(k.rippleGeo, k.rippleMat);
+  const ripple2 = new THREE.Mesh(k.rippleGeo2, k.rippleMat);
+  ripple.position.y = ripple2.position.y = shadow.position.y + 0.02;
+  group.add(ripple, ripple2);
   let revealed = null;
   return {
     group, legs: [], claws: [], spd: 4, scale: 1.3, float: MISTWALKER_FLOAT, noShadow: true,
@@ -67,9 +75,13 @@ export function buildMistwalker() {
       for (const [m, off, onMat] of swap) m.material = on ? onMat : off;
       core.visible = on;
       shadow.visible = on;
+      ripple.visible = ripple2.visible = !on;
     },
     animate(time, phase) {
       const p = Math.sin(time * 2.2 + phase);
+      const rp = 1 + 0.18 * Math.sin(time * 2.6 + phase);
+      ripple.scale.setScalar(rp);
+      ripple2.scale.setScalar(2 - rp);
       bell.scale.set(1 + p * 0.07, 1 - p * 0.09, 1 + p * 0.07);
       for (const t of tentacles) {
         t.pivot.rotation.x = Math.sin(time * 2.2 + phase + t.i) * 0.22;
@@ -82,6 +94,7 @@ export function buildMistwalker() {
 /** Shimmer: the cloaked jellies pulse together so a hidden one is faintly visible. */
 export function shimmerMistwalkers(time) {
   const k = kit();
-  k.cloak.opacity = 0.09 + 0.05 * Math.sin(time * 3.3);
+  k.cloak.opacity = 0.13 + 0.06 * Math.sin(time * 3.3);
+  k.rippleMat.opacity = 0.3 + 0.12 * Math.sin(time * 3.3);
   k.cloakTent.opacity = 0.06 + 0.04 * Math.sin(time * 3.3 + 1.2);
 }

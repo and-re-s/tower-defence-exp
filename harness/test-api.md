@@ -53,3 +53,8 @@ Selecting a tower: click it (its body or its hex) opens `#tower-panel` (`.tp-up`
 - Mistwalker (`cloaked: true`, 60 hp, waves 5-6 of level 1, or `spawnEnemy('mistwalker')`): `revealed` is false outside lantern light and no harpoon or cannon targets it (`towers[].targetId` stays 0); inside light `revealed` is true. Example: build a harpoon and a lantern, `spawnEnemy('mistwalker')`, `step(n)`, read `enemies[0].revealed`.
 - HUD: `#preview-chip` lists the next wave's enemies with counts during the breather; the spawn beach shows pulsing amber rings and a faint column. `callNextWave()` bonus = 1.5 x seconds left, also shown as a floating `.float-bonus` "+N" under the salvage chip; audioLog id `wave_called`. Lantern build plays `lantern_lit`.
 - Layout: `#next-wave` and `#tower-bar` live in `#dock` (flex column), so they never overlap; under 560 px height the build menu is a compact icon row beside the clicked hex.
+
+## Pause, speed, time of day (B-013, B-014, B-045)
+- Player pause: Esc (when nothing is selected) or P or the `#pause-btn` opens `#pause-menu` (`#resume`, `#restart`, `#quit`); `state().pauseMenu` is true then. `pause()` from the test API sets `screen: 'paused'` but shows no menu. F or `#speed` cycles `timeScale` 1 -> 2 -> 3 -> 1 (label shows e.g. `2x`). Restart starts the same level and seed; Quit goes to the title and clears enemies and towers.
+- `state().timeOfDay`: target 0..1 (0 golden hour, 1 night) = (wave-1)/(waveCount-1), so it advances when each wave starts and is 1 on the last wave. `state().daylight`: the eased value actually rendered (follows `timeOfDay` over a few game seconds; `step(600)` is enough to settle).
+- Cloaked Mistwalkers show a faint pair of ground ripples while unrevealed.

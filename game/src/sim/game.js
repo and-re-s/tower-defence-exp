@@ -58,6 +58,13 @@ export class Game {
     this.events.push({ type: 'levelStart' });
   }
 
+  /** Time of day 0..1: golden hour while wave 1 is coming and runs, full night when the last wave starts. */
+  get timeOfDay() {
+    if (!this.level) return 0;
+    const n = this.level.def.waves.length;
+    return n <= 1 ? 1 : Math.max(0, Math.min(1, (this.wave - 1) / (n - 1)));
+  }
+
   toMenu() {
     this.screen = 'menu';
     this.enemies = [];
@@ -337,6 +344,7 @@ export class Game {
       seed: this.seed,
       time: round(this.time),
       timeScale: this.timeScale,
+      timeOfDay: round(this.timeOfDay, 3),
     };
     if (!lvl) return out;
     const terrain = {};

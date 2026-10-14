@@ -45,6 +45,9 @@ export function createCameraRig(camera, dom) {
     rig.update(0);
   };
 
+  /** Current camera distance to its target; the fog scales with it so the island looks the same at every viewport size. */
+  rig.distance = dist;
+
   rig.update = (dt) => {
     // WASD / arrows pan relative to the view direction.
     const fwd = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);

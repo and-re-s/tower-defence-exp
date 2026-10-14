@@ -8,6 +8,7 @@ import './ui/styles.css';
 import { Game, TICK } from './sim/game.js';
 import { buildLevel } from './sim/levels.js';
 import { createStage } from './render/stage.js';
+import { createDaylight } from './render/daylight.js';
 import { createCameraRig } from './render/cameraRig.js';
 import { buildIsland } from './render/island.js';
 import { buildLighthouse } from './render/lighthouse.js';
@@ -29,6 +30,10 @@ const root = document.getElementById('app');
 const game = new Game();
 const stage = createStage(root);
 const rig = createCameraRig(stage.camera, stage.renderer.domElement);
+const daylight = createDaylight(stage);
+const MENU_TOD = 0.12; // the title screen sits at a low sun
+let tod = MENU_TOD; // eased time of day actually shown
+let todAt = 0; // anim clock at the last update
 const towerView = createTowerView(stage.scene);
 const fx = createFx(stage.scene);
 const enemyView = createEnemyView(stage.scene, fx);
@@ -68,8 +73,22 @@ function start(level, seed) {
 const ui = createUI(root, game, {
   play: () => start(1, 1),
   retry: () => start(game.levelId || 1, game.seed || 1),
-  menu: () => { game.toMenu(); clearActors(); },
+  menu: () => { game.toMenu(); game.timeScale = 1; deselect(); clearActors(); ui.sync(); },
+  togglePause: () => togglePause(),
+  cycleSpeed: () => cycleSpeed(),
 });
+
+/** Player pause (Esc/P/button): freezes the sim and shows the pause menu. */
+function togglePause() {
+  if (game.screen === 'playing') { game.pause(); ui.showPauseMenu(true); deselect(); }
+  else if (game.screen === 'paused') { game.resume(); ui.showPauseMenu(false); }
+  audio.unlock(); audio.play('ui_click', game.time);
+}
+function cycleSpeed() {
+  if (game.screen !== 'playing' && game.screen !== 'paused') return;
+  game.timeScale = game.timeScale >= 1 && game.timeScale < 3 && Number.isInteger(game.timeScale) ? game.timeScale + 1 : 1;
+  audio.play('ui_click', game.time);
+}
 
 function clearActors() {
   enemyView.clear(); towerView.clear(); projectileView.clear(); fx.clear();
@@ -134,7 +153,7 @@ function muzzleSmoke(towerId) {
 function handleEvents() {
   for (const ev of game.drainEvents()) {
     switch (ev.type) {
-      case 'levelStart': clearActors(); flickerAt = -100; showWorld(); break;
+      case 'levelStart': tod = game.timeOfDay; clearActors(); flickerAt = -100; showWorld(); break;
       case 'build': audio.play(ev.towerType === 'lantern' ? 'lantern_lit' : 'build', game.time); break;
       case 'upgrade': audio.play('upgrade', game.time); fx.sparkle(ev.x, ev.y + 1.2, ev.z); break;
       case 'sell': audio.play('sell', game.time); fx.chips(ev.x, ev.y, ev.z); break;
@@ -168,6 +187,8 @@ let fpsSmooth = 60;
 const ctl = {
   game, rig, camera: stage.camera, canvas: stage.renderer.domElement,
   fps: () => fpsSmooth,
+  pauseMenuOpen: () => ui.pauseMenuOpen(),
+  daylight: () => Math.round(tod * 1000) / 1000,
   handleEvents,
   start,
   step(ticks) {
@@ -210,7 +231,17 @@ function render() {
   }
   const next = game.screen === 'playing' || game.screen === 'paused' ? game.nextWaveInfo() : null;
   spawnMarker.update(anim, next && game.phase === 'breather' ? next.spawn : null);
-  world.lighthouse.update(anim, anim - flickerAt);
+  // Time of day eases toward the wave's value on the animation clock (frozen while paused).
+  const target = game.screen === 'menu' || !game.level ? MENU_TOD : game.timeOfDay;
+  const dt = Math.max(0, Math.min(30, anim - todAt));
+  todAt = anim;
+  tod += (target - tod) * (1 - Math.exp(-0.7 * dt));
+  if (Math.abs(target - tod) < 0.0005) tod = target;
+  daylight.apply(tod);
+  const d = rig.distance();
+  stage.scene.fog.near = d - 11;
+  stage.scene.fog.far = d + 25;
+  world.lighthouse.update(anim, anim - flickerAt, Math.max(0, Math.min(1, (tod - 0.3) / 0.7)));
   stage.renderer.render(stage.scene, stage.camera);
 }
 
@@ -249,7 +280,12 @@ window.addEventListener('keydown', (e) => {
     else if (e.code === 'Digit2') buildSelected('cannon');
     else if (e.code === 'Digit3') buildSelected('bell');
     else if (e.code === 'Digit4') buildSelected('lantern');
-    else if (e.code === 'Escape') deselect();
+    else if (e.code === 'KeyP') togglePause();
+    else if (e.code === 'KeyF') cycleSpeed();
+    else if (e.code === 'Escape') {
+      if (ui.pauseMenuOpen() || game.screen === 'playing' && !hud.menuHex() && !towerPanel.towerId()) togglePause();
+      else deselect();
+    }
   }
 });
 
