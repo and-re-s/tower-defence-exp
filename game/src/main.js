@@ -140,6 +140,7 @@ const placement = createPlacement({
     audio.unlock(); audio.play('ui_click', game.time);
   },
   onCancel: deselect,
+  blocked: () => ui.pauseMenuOpen(),
 });
 
 function muzzleSmoke(towerId) {
@@ -281,7 +282,7 @@ window.addEventListener('keydown', (e) => {
     else if (e.code === 'Digit3') buildSelected('bell');
     else if (e.code === 'Digit4') buildSelected('lantern');
     else if (e.code === 'KeyP') togglePause();
-    else if (e.code === 'KeyF') cycleSpeed();
+    else if (e.code === 'KeyF') { if (!ui.pauseMenuOpen()) cycleSpeed(); }
     else if (e.code === 'Escape') {
       if (ui.pauseMenuOpen() || game.screen === 'playing' && !hud.menuHex() && !towerPanel.towerId()) togglePause();
       else deselect();

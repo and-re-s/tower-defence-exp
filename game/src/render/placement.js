@@ -7,7 +7,7 @@ import { towerRange } from '../sim/towers.js';
  * Hex picking, the hover outline and the range ring. Pure view code: it asks the game whether a hex is
  * buildable and tells the UI what was clicked.
  */
-export function createPlacement({ scene, camera, dom, game, onPick, onCancel }) {
+export function createPlacement({ scene, camera, dom, game, onPick, onCancel, blocked = () => false }) {
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -84,6 +84,7 @@ mats.tealDisc.blending = THREE.AdditiveBlending;
   dom.addEventListener('pointermove', (e) => { pointerIn = true; hover = pick(e.clientX, e.clientY); });
   dom.addEventListener('pointerleave', () => { pointerIn = false; hover = null; });
   dom.addEventListener('pointerdown', (e) => {
+    if (blocked()) return;
     if (e.button === 2) { onCancel(); return; }
     if (e.button !== 0 || (game.screen !== 'playing' && game.screen !== 'paused')) return;
     const hex = pick(e.clientX, e.clientY);

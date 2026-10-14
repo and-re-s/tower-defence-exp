@@ -25,7 +25,7 @@ function kit() {
     shadow: new THREE.MeshBasicMaterial({ color: 0x0b1a33, transparent: true, opacity: 0.28, depthWrite: false }),
     rippleGeo: new THREE.RingGeometry(0.62, 0.74, 28).rotateX(-Math.PI / 2),
     rippleGeo2: new THREE.RingGeometry(0.34, 0.4, 24).rotateX(-Math.PI / 2),
-    rippleMat: new THREE.MeshBasicMaterial({ color: 0x9fe8e0, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }),
+    rippleMat: new THREE.MeshBasicMaterial({ color: 0xc9a8ff, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }),
     shadowGeo: new THREE.CircleGeometry(0.34, 14).rotateX(-Math.PI / 2),
   };
   return shared;

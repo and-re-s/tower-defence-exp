@@ -4,13 +4,13 @@ import * as THREE from 'three';
 const hex = (n) => new THREE.Color(n);
 const KEYS = {
   sun: [0xffc48c, 0xff9a5a, 0x9db2ea, 0x8aa4e8].map(hex),
-  sunInt: [3.0, 2.4, 1.5, 1.0],
+  sunInt: [3.0, 2.4, 1.8, 1.5],
   sunY: [8.5, 5.5, 5.0, 8.0],
   hemiSky: [0xd2a4ae, 0xc27a8a, 0x6a7cba, 0x6580c0].map(hex),
-  hemiGround: [0x1f3f70, 0x1b3560, 0x1a3764, 0x1a3562].map(hex),
-  hemiInt: [1.7, 1.6, 1.6, 1.7],
-  fog: [0x13294b, 0x2a2a52, 0x172f5a, 0x0b1a36].map(hex),
-  sea: [0x1b3d6b, 0x2b3a68, 0x1b3868, 0x112850].map(hex),
+  hemiGround: [0x3a4468, 0x2c3a68, 0x2a4274, 0x2a4676].map(hex),
+  hemiInt: [1.7, 1.7, 1.9, 2.2],
+  fog: [0x4a3858, 0x2a2a52, 0x172f5a, 0x0b1a36].map(hex),
+  sea: [0x2d4a6c, 0x2b3a68, 0x1b3868, 0x112850].map(hex),
   horizon: [0xf4a462, 0xe0805a, 0x5a5f9a, 0x1a2f5a].map(hex),
   zenith: [0x1d3a68, 0x1a2d58, 0x13294b, 0x0a1630].map(hex),
   exposure: [1.05, 1.05, 1.08, 1.12],
@@ -37,7 +37,7 @@ export function createDaylight(stage) {
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { horizon: { value: new THREE.Color() }, zenith: { value: new THREE.Color() } },
     vertexShader: 'varying float vH; void main(){ vH = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 horizon; uniform vec3 zenith; varying float vH; void main(){ float k = smoothstep(0.0, 0.55, vH); gl_FragColor = vec4(mix(horizon, zenith, k), 1.0); #include <colorspace_fragment>\n}',
+    fragmentShader: 'uniform vec3 horizon; uniform vec3 zenith; varying float vH; void main(){ float k = smoothstep(0.0, 0.55, vH); gl_FragColor = vec4(mix(horizon, zenith, k), 1.0);\n#include <colorspace_fragment>\n}',
   });
   const skyGeo = new THREE.SphereGeometry(150, 24, 12);
   const sky = new THREE.Mesh(skyGeo, skyMat);
