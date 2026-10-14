@@ -13,3 +13,4 @@ One line per item.
 - B-007 · M1 · M — Sound pass: every action, surf ambience, mute — done round-04 (f744902)
 - B-040 · M0 · S — Round 04 minor bugs bundle — done round-05 (81d02c8)
 - B-008 · M1 · M — Cliff Cannon and the high-ground rule — done round-05 (81d02c8)
+- B-041 · M0 · S — Round 05 minor bugs bundle — done round-06 (19fabd5)

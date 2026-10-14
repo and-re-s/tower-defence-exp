@@ -7,15 +7,13 @@ Finished and dropped items live in `harness/backlog-done.md`.
 
 ## M0 — vertical slice
 
-### B-041 · fix · review · S — Round 05 minor bugs bundle
-Found: round-05 (minor)
+### B-042 · fix · todo · S — Round 06 minor bugs bundle
+Found: round-06 (minor)
 Repro/Done when:
-- with a cannon on (0,-1): `start({level:1,seed:1}); pause(); build('cannon',0,-1)`, click at screen (640,300) (on the cannon body): the build menu opens for the hex BEHIND it (0,-2) and picking Harpoon Post builds there; clicking the visible body of a tower must resolve to the tower's own hex (or be ignored/refused until B-009 selection), never the hex behind it;
-- hovering/clicking an occupied hex must not open "Build here" (refuse or, later, select);
-- the armed type from the tower bar survives `start()`/Retry (cannon still highlighted and its ring used after a restart); reset to Harpoon Post on start, or make the menu hover state consistent with the armed type;
-- a cannon shell's explosion is hardly visible at the default camera (boom2.jpg, 4 ticks after `cannon_boom`): make the blast burst readable (bigger flash/ring/debris, visible for about 0.4 s).
-
-
+- hovering an occupied hex (tower base) shows the same amber outline as a buildable hex (hover-occupied.jpg); use a distinct "select" cue (e.g. brighter ring/pointer) or none, so amber still means "you can build here";
+- the wheel zoom range is tiny (`state().camera.zoom` only goes 1 -> 0.76, towers stay small); allow a closer view (e.g. down to ~0.4) so tier changes on towers are readable;
+- `state().camera.yawDeg` reaches 360 after a full rotation; normalize to 0..359;
+- the upgrade sparkle is only a few faint dots (upgrade-flipbook.jpg): make it readable at the default camera.
 
 ---
 
@@ -23,7 +21,8 @@ Repro/Done when:
 
 
 
-### B-009 · M1 · review · M — Select a tower: upgrade, sell, targeting
+### B-009 · M1 · todo · M — Select a tower: upgrade, sell, targeting
+Failed round-06: "Done when" line 2 (refund 70%): cannon (90) sells for 62 instead of 63 and a tier-2 cannon (170 spent) for 118 instead of 119, because `Math.floor(spent * 0.7)` hits floating point (90*0.7 = 62.999...). Repro: `start({level:1,seed:1}); grantSalvage(500); const id=build('cannon',0,-1).id; sell(id)` returns refund 62. Fix: round with an epsilon (e.g. `Math.floor(spent*7/10)`) and re-check 50, 90, 110, 140, 170, 200, 290. Everything else (tier/damage/rate, tier 3 max, targeting strongest, panel placement, Esc/right click) was verified and need not be rebuilt.
 Why: depth through investment decisions; the decision stays on the map.
 Behavior: Clicking a tower selects it: its range ring appears and a small panel anchored next to it shows its stats, "Upgrade for N" (tiers 2 and 3, each visibly taller or more ornate), targeting priority (first / strongest / closest) and "Sell for N" (70% refund). Esc or right click deselects.
 Done when:
